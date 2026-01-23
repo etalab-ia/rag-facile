@@ -2189,7 +2189,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.0.1" },
-    { name = "ruff", specifier = ">=0.9.2" },
+    { name = "ruff", specifier = ">=0.9.3" },
     { name = "ty", specifier = ">=0.0.1" },
 ]
 

@@ -10,7 +10,7 @@ def hello(name: str):
 
 @app.command()
 def version():
-    print("rag-kit v0.1.0")
+    print("rag-facile v0.1.0")
 
 
 if __name__ == "__main__":
