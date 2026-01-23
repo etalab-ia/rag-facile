@@ -1,0 +1,12 @@
+[project]
+name = "admin"
+version = "0.1.0"
+description = "Admin UI"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "streamlit>=1.40.0",
+]
+
+[project.scripts]
+admin = "streamlit.web.cli:main"

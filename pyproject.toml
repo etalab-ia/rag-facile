@@ -1,0 +1,30 @@
+[project]
+name = "rag-kit"
+version = "0.1.0"
+description = "RAG Starter Kit for French Government"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "chat",
+    "admin",
+    "ingestion",
+    "cli",
+    "sample-package",
+]
+
+[tool.uv.sources]
+chat = { workspace = true }
+admin = { workspace = true }
+ingestion = { workspace = true }
+cli = { workspace = true }
+sample-package = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.2",
+    "ty>=0.0.1",
+    "pre-commit>=4.0.1",
+]
+
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]
