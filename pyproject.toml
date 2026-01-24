@@ -3,13 +3,14 @@ name = "rag-kit"
 version = "0.1.0"
 description = "RAG Starter Kit for French Government"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "chat",
     "admin",
     "ingestion",
     "cli",
     "sample-package",
+    "reflex-chat",
 ]
 
 [tool.uv.sources]
@@ -18,6 +19,7 @@ admin = { workspace = true }
 ingestion = { workspace = true }
 cli = { workspace = true }
 sample-package = { workspace = true }
+reflex-chat = { workspace = true }
 
 [dependency-groups]
 dev = [
