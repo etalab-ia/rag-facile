@@ -339,6 +339,7 @@ source = { editable = "apps/chainlit-chat" }
 dependencies = [
     { name = "chainlit" },
     { name = "openai" },
+    { name = "pypdf" },
     { name = "python-dotenv" },
 ]
 
@@ -346,6 +347,7 @@ dependencies = [
 requires-dist = [
     { name = "chainlit", specifier = ">=1.3.0" },
     { name = "openai", specifier = ">=1.0.0" },
+    { name = "pypdf", specifier = ">=5.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 
@@ -2109,6 +2111,15 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
+]
+
+[[package]]
+name = "pypdf"
+version = "6.6.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/da/50a15233ca512dcac68fd6edeabbf1cad5260e7f032f5a24934a7d5662c5/pypdf-6.6.1.tar.gz", hash = "sha256:7ea09ab3748644dacef1a30c475d1edc031656f69c03332c291ebf5b9291a909", size = 5281346, upload-time = "2026-01-25T14:13:36.275Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/cc/d9fd9f87bec8ebbfde76aaa9e30703e37810118e913538ef6526e94ebe51/pypdf-6.6.1-py3-none-any.whl", hash = "sha256:453354ddb4398319197f4006fbd1b93c4fbc995f15b15c0af88cba99494ce65a", size = 328987, upload-time = "2026-01-25T14:13:34.901Z" },
 ]
 
 [[package]]

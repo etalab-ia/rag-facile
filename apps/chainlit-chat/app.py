@@ -3,10 +3,9 @@ import json
 import os
 
 import chainlit as cl
-
-# Load environment variables
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
+from pypdf import PdfReader
 
 load_dotenv()
 
@@ -93,7 +92,30 @@ async def call_tool(tool_call, message_history):
 @cl.on_message
 async def main(message: cl.Message):
     message_history = cl.user_session.get("message_history")
-    message_history.append({"role": "user", "content": message.content})
+
+    # Handle attachments
+    file_content = ""
+    if message.elements:
+        for element in message.elements:
+            if element.name.endswith(".pdf"):
+                try:
+                    reader = PdfReader(element.path)
+                    text = ""
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+                    file_content += (
+                        f"\n\n--- Content of attached file '{element.name}' ---\n"
+                    )
+                    file_content += text
+                    file_content += "\n--- End of file ---\n"
+                except Exception as e:
+                    file_content += f"\n\nError reading PDF '{element.name}': {str(e)}\n"
+
+    user_message = message.content
+    if file_content:
+        user_message += file_content
+
+    message_history.append({"role": "user", "content": user_message})
 
     msg = cl.Message(content="")
 
@@ -112,6 +134,9 @@ async def main(message: cl.Message):
     cur_tool_calls = []
 
     async for part in stream:
+        if not part.choices:
+            continue
+
         # Handle new tool calls
         if part.choices[0].delta.tool_calls:
             for tool_call_delta in part.choices[0].delta.tool_calls:
@@ -170,6 +195,8 @@ async def main(message: cl.Message):
         )
 
         async for part in stream_post_tool:
+            if not part.choices:
+                continue
             if part.choices[0].delta.content:
                 token = part.choices[0].delta.content
                 await msg.stream_token(token)
