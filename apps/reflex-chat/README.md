@@ -8,38 +8,28 @@ A user-friendly, highly customizable Python web app designed to demonstrate LLMs
 
 # Getting Started
 
-You'll need a valid OpenAI subscription - save your API key under the environment variable `OPENAI_API_KEY`:
+### 1. Environment Configuration
+
+This app is configured to use the [Albert API](https://albert.sites.beta.gouv.fr/). You must provide your API key and the base URL. Create a `.env` file in this directory based on `.env.example`:
 
 ```bash
-export OPENAI_API_KEY="YOUR_OPENAI_API_KEY" # replace me!
+cp .env.example .env
 ```
 
-### 🧬 1. Clone the Repo
+Edit the `.env` file to add your `OPENAI_API_KEY` and `OPENAI_BASE_URL`.
+
+### 2. Run the application
+
+From the **root of the monorepo**, you can run:
 
 ```bash
-git clone https://github.com/reflex-dev/reflex-chat.git
+just reflex-chat
 ```
 
-### 📦 2. Install Reflex
-
-To get started with Reflex, you'll need:
-
-- Python 3.10+
-- Pip dependencies: `reflex`, `openai`
-
-Install `pip` dependencies with the provided `requirements.txt`:
+Or from **this directory**:
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 🚀 3. Run the application
-
-Initialize and run the app:
-
-```
-reflex init
-reflex run
+uv run reflex run
 ```
 
 # Features

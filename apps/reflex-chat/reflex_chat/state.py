@@ -5,9 +5,12 @@ import reflex as rx
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
-# Checking if the API key is set properly
+# Checking if the API keys are set properly
 if not os.getenv("OPENAI_API_KEY"):
     raise Exception("Please set OPENAI_API_KEY environment variable.")
+
+if not os.getenv("OPENAI_BASE_URL"):
+    raise Exception("Please set OPENAI_BASE_URL environment variable for Albert API.")
 
 
 class QA(TypedDict):
@@ -148,7 +151,9 @@ class State(rx.State):
         messages = messages[:-1]
 
         # Start a new session to answer the question.
-        session = OpenAI().chat.completions.create(
+        session = OpenAI(
+            base_url=os.getenv("OPENAI_BASE_URL"),
+        ).chat.completions.create(
             model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
             messages=messages,
             stream=True,
