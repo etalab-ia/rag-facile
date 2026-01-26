@@ -6,6 +6,11 @@ import chainlit as cl
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from pypdf import PdfReader
+import engineio
+
+# Increase the number of packets allowed in a single payload to prevent "Too many packets in payload" errors
+# This is especially helpful during streaming or when WebSockets are falling back to polling.
+engineio.payload.Payload.max_decode_packets = 200
 
 load_dotenv()
 
