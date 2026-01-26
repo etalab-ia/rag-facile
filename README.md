@@ -7,7 +7,7 @@ This starter kit provides a foundation for building RAG (Retrieval-Augmented Gen
 
 ## Components
 The project is organized as a monorepo with the following foundational components:
-- **Chat Interface**: Built with ChainLit (`apps/chat`).
+- **Chat Interface**: Built with ChainLit (`apps/chainlit-chat`).
 - **Reflex Chat**: Interactive chat built with Reflex (`apps/reflex-chat`).
 - **Admin UI**: Administration interface (`apps/admin`).
 - **Ingestion Pipeline**: Data processing pipeline (`apps/ingestion`).
@@ -33,13 +33,14 @@ just setup
 ```
 
 ### 3. Environment Variables
-For the Reflex Chat app, copy the example environment file and add your credentials. Using the Albert API requires specifying both `OPENAI_API_KEY` and `OPENAI_BASE_URL`:
+For the chat apps, copy the example environment files and add your credentials. Using the Albert API requires specifying both `OPENAI_API_KEY` and `OPENAI_BASE_URL`:
 ```bash
 cp apps/reflex-chat/.env.example apps/reflex-chat/.env
+cp apps/chainlit-chat/.env.example apps/chainlit-chat/.env
 ```
 
 ### 4. Running the Applications
 Use `just` to run any of the applications from the root directory:
 - `just reflex-chat`: Runs the Reflex chat app at http://localhost:3000
-- `just chat`: Runs the ChainLit chat app
+- `just chainlit-chat`: Runs the ChainLit chat app at http://localhost:8000
 - `just admin`: Runs the Streamlit admin app

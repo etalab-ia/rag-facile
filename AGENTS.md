@@ -1,5 +1,10 @@
 # Project Knowledge: RAG Starter Kit
 
+## 0. Global Rules Compliance
+- **CRITICAL**: You **MUST** always create a new git branch for every task. Never work directly on `main`.
+- **CRITICAL**: You **MUST** run linting (`ruff format`, `ruff check`) and verification **before** every commit.
+- **Rule**: Read and follow all Global User Rules defined in the system prompt without exception.
+
 ## 1. Project Architecture & Toolchain
 - **Fact**: Python 3.14 monorepo managed by **moon** (repo tooling) and **uv** (package manager).
 - **Rule**: Always use `uv sync` to install dependencies and update lockfiles. Never use `pip` or `poetry`.
