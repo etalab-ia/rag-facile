@@ -156,7 +156,7 @@ class State(rx.State):
 
         # Stream the results, yielding after every word.
         for item in session:
-            if hasattr(item.choices[0].delta, "content"):
+            if item.choices and hasattr(item.choices[0].delta, "content"):
                 answer_text = item.choices[0].delta.content
                 # Ensure answer_text is not None before concatenation
                 if answer_text is not None:
