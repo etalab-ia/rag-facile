@@ -112,7 +112,7 @@ class State(rx.State):
         if not question:
             return
 
-        async for value in self.openai_process_question(question):
+        async for value in self.openai_process_question(question):  # ty:ignore[call-non-callable]
             yield value
 
     @rx.event
