@@ -1,4 +1,4 @@
-# RAG Starter Kit
+# RAG Facile
  > [!IMPORTANT]
  > This project is a starter kit for RAG applications in the French government.
 
