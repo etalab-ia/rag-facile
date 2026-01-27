@@ -80,21 +80,8 @@ def generate():
             else:
                 path.unlink()
 
-    console.print("Applying Grit patterns...")
-
-    # Apply Grit patterns for Python files
-    grit_patterns = repo_root / ".grit" / "patterns"
-    app_grit = grit_patterns / "app.grit"
-    target_app_py = target / "app.py"
-
-    subprocess.run(
-        ["grit", "apply", str(app_grit), str(target_app_py), "--force"],
-        check=True,
-        cwd=repo_root,
-    )
-
     # Fallback replacements for TOML/MD
-    console.print("Applying fallback parameterization...")
+    console.print("Applying parameterization...")
 
     # Parameterize pyproject.toml
     pyproject_path = target / "pyproject.toml"
@@ -141,11 +128,12 @@ def generate():
         console.print("[red]✘ pyproject.toml validation failed[/red]")
         raise typer.Exit(code=1)
 
-    app_py_valid = "{{ openai_model }}" in target_app_py.read_text()
-    if app_py_valid:
-        console.print("✔ app.py validation passed")
+    # Check that app.py DOES NOT contain a default value string that might mislead
+    # But since we aren't templating app.py anymore, we just ensure it exists
+    if (target / "app.py").exists():
+        console.print("✔ app.py exists")
     else:
-        console.print("[red]✘ app.py validation failed[/red]")
+        console.print("[red]✘ app.py missing[/red]")
         raise typer.Exit(code=1)
 
     console.print("[green]Template generation complete![/green]")

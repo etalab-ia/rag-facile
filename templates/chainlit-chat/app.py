@@ -18,7 +18,7 @@ load_dotenv()
 # Configure OpenAI
 api_key = os.getenv("OPENAI_API_KEY")
 base_url = os.getenv("OPENAI_BASE_URL")
-model = os.getenv("OPENAI_MODEL", "{{ openai_model }}")
+model = os.getenv("OPENAI_MODEL")
 
 client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
