@@ -8,6 +8,15 @@ description:
   help: Short description of the project
   default: A Chainlit Chat Application
 
+openai_api_key:
+  type: str
+  help: What is your OpenAI API Key?
+
+openai_base_url:
+  type: str
+  help: What is your OpenAI Base URL?
+  default: https://api.openai.com/v1
+
 openai_model:
   type: str
   help: Default OpenAI model to use

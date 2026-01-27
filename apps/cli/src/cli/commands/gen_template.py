@@ -18,6 +18,15 @@ description:
   help: Short description of the project
   default: A Chainlit Chat Application
 
+openai_api_key:
+  type: str
+  help: What is your OpenAI API Key?
+
+openai_base_url:
+  type: str
+  help: What is your OpenAI Base URL?
+  default: https://api.openai.com/v1
+
 openai_model:
   type: str
   help: Default OpenAI model to use
@@ -107,6 +116,16 @@ def generate():
         )
         md_path.write_text(content)
         console.print("✔ chainlit.md parameterized")
+
+    # Generate parameterized .env
+    console.print("Generating parameterized .env...")
+    env_content = (
+        "OPENAI_API_KEY={{ openai_api_key }}\n"
+        "OPENAI_BASE_URL={{ openai_base_url }}\n"
+        "OPENAI_MODEL={{ openai_model }}\n"
+    )
+    (target / ".env").write_text(env_content)
+    console.print("✔ .env generated")
 
     # Generate copier.yml
     console.print("Generating copier.yml...")
