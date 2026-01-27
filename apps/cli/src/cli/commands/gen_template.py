@@ -79,15 +79,20 @@ def run_ast_grep(target_dir: Path, pattern: str, rewrite: str):
                 "--rewrite",
                 rewrite,
                 "-U",
+                ".",
             ],
             cwd=target_dir,
             check=True,
             capture_output=True,
         )
     except subprocess.CalledProcessError as e:
+        # sg returns 1 if no matches are found, which we want to ignore
+        if e.returncode == 1 and not e.stderr.decode().strip():
+            return
+
         msg = (
             f"[yellow]Warning: ast-grep failed for {pattern}: "
-            f"{e.stderr.decode()}[/yellow]"
+            f"{e.stderr.decode().strip()}[/yellow]"
         )
         console.print(msg)
 
@@ -145,6 +150,7 @@ def generate(
     # Phase 1: Semantic Preparation with LibCST
     mappings = {
         app_type.value: "{{ project_name }}",
+        app_type.value.replace("-", "_"): "{{ project_name | replace('-', '_') }}",
         "You are a helpful assistant.": "{{ system_prompt }}",
         "You are a friendly chatbot named Reflex. Respond in markdown.": (
             "{{ system_prompt }}"
@@ -181,7 +187,7 @@ def generate(
 
     # Phase 2: Structural Injection with ast-grep
     # Inject actual Jinja tags where LibCST placeholders were used
-    for placeholder in PLACEHOLDERS.values():
+    for placeholder in set(PLACEHOLDERS.values()):
         run_ast_grep(target, placeholder, "{{ project_name | replace('-', '_') }}")
 
     # Phase 3: App-Specific Parameterization and Metadata
