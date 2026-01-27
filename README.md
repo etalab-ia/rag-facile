@@ -44,3 +44,17 @@ Use `just` to run any of the applications from the root directory:
 - `just reflex-chat`: Runs the Reflex chat app at http://localhost:3000
 - `just chainlit-chat`: Runs the ChainLit chat app at http://localhost:8000
 - `just admin`: Runs the Streamlit admin app
+
+### 5. Template Generation
+The CLI provides a command to generate parameterized project templates (using [Copier](https://copier.readthedocs.io/)) from the existing apps.
+
+To update the templates after making changes to the source apps:
+```bash
+# Generate Chainlit template
+uv run rf template generate --app chainlit-chat
+
+# Generate Reflex template
+uv run rf template generate --app reflex-chat
+```
+
+The generated templates will be stored in the `templates/` directory.
