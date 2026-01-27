@@ -19,17 +19,17 @@ description:
 
 openai_api_key:
   type: str
-  help: What is your OpenAI API Key?
+  help: What is your OpenAI API Key? (Get one at https://albert.sites.beta.gouv.fr/access/)
 
 openai_base_url:
   type: str
   help: What is your OpenAI Base URL?
-  default: https://api.openai.com/v1
+  default: https://albert.api.etalab.gouv.fr/v1
 
 openai_model:
   type: str
   help: Default OpenAI model to use
-  default: gpt-3.5-turbo
+  default: openweight-large
 
 system_prompt:
   type: str
