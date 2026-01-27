@@ -26,4 +26,5 @@ gen-templates:
 # Create a new application from a template using Copier
 # Usage: just create-app [app-type] [destination]
 create-app app_type="chainlit-chat" destination="":
+        @if [ ! -d "templates/{{app_type}}" ]; then just gen-templates; fi
         uv run copier copy templates/{{app_type}} {{if destination == "" { app_type } else { destination}}}

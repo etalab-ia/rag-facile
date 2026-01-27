@@ -208,3 +208,6 @@ marimo/_lsp/
 # Chainlit
 .chainlit/
 .files/
+
+# Templates (generated dynamically)
+/templates/
