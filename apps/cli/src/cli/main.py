@@ -1,11 +1,16 @@
 import typer
 
+from cli.commands import gen_template
+
 app = typer.Typer()
 
 
 @app.command()
 def hello(name: str):
     print(f"Hello {name}")
+
+
+app.add_typer(gen_template.app, name="template")
 
 
 @app.command()

@@ -30,4 +30,3 @@ dev = [
 
 [tool.uv.workspace]
 members = ["apps/*", "packages/*"]
-exclude = ["packages/templates"]
