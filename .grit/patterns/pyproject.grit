@@ -1,0 +1,6 @@
+pattern GenPyproject() {
+    `"chainlit-chat"` => `"{{ project_name }}"`,
+    `"Chainlit Chat with OpenAI Functions Streaming"` => `"{{ description }}"`
+}
+
+GenPyproject()

@@ -1,0 +1,5 @@
+pattern GenAppConfig() {
+    `"gpt-3.5-turbo"` => `"{{ openai_model }}"`
+}
+
+GenAppConfig()
