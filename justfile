@@ -1,3 +1,6 @@
+default:
+	@just --list
+
 # Run the Reflex Chat application
 reflex-chat:
 	cd apps/reflex-chat && uv run reflex run
@@ -14,3 +17,26 @@ admin:
 setup:
         uv sync
         uv lock
+
+# Generate all app templates
+gen-templates:
+        uv run --project apps/cli rf template generate --app chainlit-chat
+        uv run --project apps/cli rf template generate --app reflex-chat
+
+# Create a new application from a template using Copier
+# Usage: just create-app [app-type] [destination]
+create-app app_type="chainlit-chat" destination="":
+        #!/usr/bin/env bash
+        set -euo pipefail
+        TYPE="{{app_type}}"
+        # Normalize input
+        if [[ "$TYPE" == "chainlit" ]] || [[ "$TYPE" == "chainlit-app" ]]; then TYPE="chainlit-chat"; fi
+        if [[ "$TYPE" == "reflex" ]] || [[ "$TYPE" == "reflex-app" ]]; then TYPE="reflex-chat"; fi
+
+        if [ "$TYPE" != "chainlit-chat" ] && [ "$TYPE" != "reflex-chat" ]; then
+            echo "Error: Invalid app type '{{app_type}}'. Valid options are: chainlit-chat, reflex-chat (or shorthands like 'chainlit', 'reflex')"
+            exit 1
+        fi
+
+        if [ ! -d "templates/$TYPE" ]; then just gen-templates; fi
+        uv run copier copy templates/"$TYPE" "{{if destination == "" { "$TYPE" } else { destination}}}"

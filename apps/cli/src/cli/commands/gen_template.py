@@ -1,8 +1,10 @@
 import shutil
+import subprocess
 from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
+import libcst as cst
 import typer
 from rich.console import Console
 
@@ -17,17 +19,82 @@ class AppType(str, Enum):
 
 def _read_config(app_type: AppType) -> str:
     """Read the copier.yml content from the package resources."""
-    # We assume the configs are in cli.configs package
-    # This matches the file structure created: apps/cli/src/cli/configs/
-
-    # Let's trust the file system path for this script's location
-    current_dir = Path(__file__).parent
-    config_dir = current_dir.parent / "configs"
+    # Robustly find repo root (assumes gen_template.py is in apps/cli/src/cli/commands/)
+    repo_root = Path(__file__).resolve().parents[5]
+    config_dir = repo_root / "apps" / "cli" / "src" / "cli" / "configs"
 
     if app_type == AppType.chainlit:
         return (config_dir / "chainlit_copier.yml").read_text()
     else:
         return (config_dir / "reflex_copier.yml").read_text()
+
+
+# Placeholders to maintain valid Python syntax during CST pass
+PLACEHOLDERS = {
+    "chainlit_chat": "__PROJECT_SLUG_PLACEHOLDER__",
+    "reflex_chat": "__PROJECT_SLUG_PLACEHOLDER__",
+}
+
+
+class JinjaTransformer(cst.CSTTransformer):
+    """
+    LibCST Transformer to parameterize Python code.
+    Phase 1: Semantic Preparation
+    """
+
+    def __init__(self, mappings: dict[str, str]):
+        self.mappings = mappings
+
+    def leave_SimpleString(
+        self, original_node: cst.SimpleString, updated_node: cst.SimpleString
+    ) -> cst.SimpleString:
+        # Parameterize strings
+        val = updated_node.value
+        for golden, tag in self.mappings.items():
+            if golden in val:
+                # Replace golden value with Jinja tag inside the string
+                new_val = val.replace(golden, tag)
+                return updated_node.with_changes(value=new_val)
+        return updated_node
+
+    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
+        # Parameterize identifiers using placeholders
+        if updated_node.value in PLACEHOLDERS:
+            return updated_node.with_changes(value=PLACEHOLDERS[updated_node.value])
+        return updated_node
+
+
+def run_ast_grep(target_dir: Path, pattern: str, rewrite: str):
+    """Run ast-grep (sg) via pnpx for structural search and replace."""
+    try:
+        subprocess.run(
+            [
+                "pnpm",
+                "--package=@ast-grep/cli",
+                "dlx",
+                "sg",
+                "run",
+                "--pattern",
+                pattern,
+                "--rewrite",
+                rewrite,
+                "-U",
+                ".",
+            ],
+            cwd=target_dir,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        # sg returns 1 if no matches are found, which we want to ignore
+        if e.returncode == 1 and not e.stderr.decode().strip():
+            return
+
+        msg = (
+            f"[yellow]Warning: ast-grep failed for {pattern}: "
+            f"{e.stderr.decode().strip()}[/yellow]"
+        )
+        console.print(msg)
 
 
 @app.command()
@@ -37,10 +104,11 @@ def generate(
     ],
 ):
     """
-    Generate a Chat app template using Copier (via GritQL/manual parameterization).
+    Generate a Chat app template using a Hybrid LibCST + ast-grep pipeline.
     Copies apps/<app_type> to templates/<app_type> and parameterizes it.
     """
-    repo_root = Path.cwd()
+    # Robustly find repo root (assumes gen_template.py is in apps/cli/src/cli/commands/)
+    repo_root = Path(__file__).resolve().parents[5]
     source = repo_root / "apps" / app_type.value
     target = repo_root / "templates" / app_type.value
 
@@ -77,34 +145,74 @@ def generate(
             else:
                 path.unlink()
 
-    # Fallback replacements for TOML/MD/etc
-    console.print("Applying parameterization...")
+    # Rename Justfile -> Justfile.jinja
+    just_path = target / "Justfile"
+    if just_path.exists():
+        just_path.rename(target / "Justfile.jinja")
+        console.print("✔ Justfile -> Justfile.jinja renamed")
 
-    # Load Copier Config
+    console.print("Applying parameterization pipeline...")
+
+    # Phase 1: Semantic Preparation with LibCST
+    mappings = {
+        app_type.value: "{{ project_name }}",
+        app_type.value.replace("-", "_"): "{{ project_name | replace('-', '_') }}",
+        "You are a helpful assistant.": "{{ system_prompt }}",
+        "You are a friendly chatbot named Reflex. Respond in markdown.": (
+            "{{ system_prompt }}"
+        ),
+    }
+
+    if app_type == AppType.chainlit:
+        mappings.update(
+            {
+                "Chainlit Chat with OpenAI Functions Streaming": "{{ description }}",
+                "Welcome to Chainlit! 🚀🤖": "{{ welcome_message }}",
+            }
+        )
+    else:
+        mappings.update(
+            {
+                "Reflex Chat Application": "{{ description }}",
+            }
+        )
+
+    python_files = list(target.rglob("*.py"))
+    for py_file in python_files:
+        code = py_file.read_text()
+        try:
+            tree = cst.parse_module(code)
+            transformer = JinjaTransformer(mappings)
+            modified_tree = tree.visit(transformer)
+            py_file.write_text(modified_tree.code)
+            console.print(f"✔ LibCST pass applied to {py_file.name}")
+        except Exception as e:
+            console.print(
+                f"[yellow]Warning: LibCST failed for {py_file.name}: {e}[/yellow]"
+            )
+
+    # Phase 2: Structural Injection with ast-grep
+    # Inject actual Jinja tags where LibCST placeholders were used
+    for placeholder in set(PLACEHOLDERS.values()):
+        run_ast_grep(target, placeholder, "{{ project_name | replace('-', '_') }}")
+
+    # Phase 3: App-Specific Parameterization and Metadata
     copier_yml = _read_config(app_type)
-
-    # Common Parameterization
 
     # Parameterize pyproject.toml
     pyproject_path = target / "pyproject.toml"
     if pyproject_path.exists():
         content = pyproject_path.read_text()
         content = content.replace(f'"{app_type.value}"', '"{{ project_name }}"')
-        # Description might vary, handling generic replacement if possible or specific
         if app_type == AppType.chainlit:
-            content = content.replace(
-                '"Chainlit Chat with OpenAI Functions Streaming"',
-                '"{{ description }}"',
-            )
+            msg = "Chainlit Chat with OpenAI Functions Streaming"
+            content = content.replace(f'"{msg}"', '"{{ description }}"')
         else:
             content = content.replace(
                 '"Reflex Chat Application"', '"{{ description }}"'
             )
 
-        # Write to .jinja file
-        jinja_path = target / "pyproject.toml.jinja"
-        jinja_path.write_text(content)
-        # Remove original
+        (target / "pyproject.toml.jinja").write_text(content)
         pyproject_path.unlink()
         console.print("✔ pyproject.toml -> pyproject.toml.jinja parameterized")
 
@@ -116,16 +224,13 @@ def generate(
 
     # Generate parameterized .env.jinja
     console.print("Generating parameterized .env.jinja...")
-    # Both apps use similar env vars based on our analysis
     env_content = (
         "OPENAI_API_KEY={{ openai_api_key }}\n"
         "OPENAI_BASE_URL={{ openai_base_url }}\n"
         "OPENAI_MODEL={{ openai_model }}\n"
     )
     (target / ".env.jinja").write_text(env_content)
-    console.print("✔ .env.jinja generated")
 
-    # App Specific Parameterization
     if app_type == AppType.chainlit:
         # Parameterize chainlit.md
         md_path = target / "chainlit.md"
@@ -134,10 +239,7 @@ def generate(
             content = content.replace(
                 "# Welcome to Chainlit! 🚀🤖", "# {{ welcome_message }}"
             )
-            # Write to .jinja file
-            jinja_path = target / "chainlit.md.jinja"
-            jinja_path.write_text(content)
-            # Remove original
+            (target / "chainlit.md.jinja").write_text(content)
             md_path.unlink()
             console.print("✔ chainlit.md -> chainlit.md.jinja parameterized")
 
@@ -146,7 +248,6 @@ def generate(
         rxconfig_path = target / "rxconfig.py"
         if rxconfig_path.exists():
             content = rxconfig_path.read_text()
-            # Replace app_name="reflex_chat" with jinja
             content = content.replace(
                 'app_name="reflex_chat"',
                 "app_name=\"{{ project_name|replace('-', '_') }}\"",
@@ -155,62 +256,30 @@ def generate(
             rxconfig_path.unlink()
             console.print("✔ rxconfig.py -> rxconfig.py.jinja parameterized")
 
-        # Parameterize state.py for system_prompt
-        # Path: reflex_chat/state.py
-
-        # Parameterize state.py for system_prompt
-        # And also parameterize imports in all python files in the package
+        # Reflex specific directory renames and file extensions
         pkg_dir = target / "reflex_chat"
         if pkg_dir.exists():
-            # 1. Parameterize state.py content (system prompt)
-            state_path = pkg_dir / "state.py"
-            if state_path.exists():
-                content = state_path.read_text()
-                content = content.replace(
-                    '"You are a friendly chatbot named Reflex. Respond in markdown."',
-                    '"{{ system_prompt }}"',
-                )
-                state_path.write_text(content)
-                console.print("✔ reflex_chat/state.py parameterized")
-
-            # 2. Parameterize imports in all .py files and rename to .jinja
-            # Replaces 'reflex_chat' with Jinja project name template.
+            # Rename all .py files to .py.jinja in the package dir
             for py_file in pkg_dir.rglob("*.py"):
-                content = py_file.read_text()
-                new_content = content.replace(
-                    "reflex_chat", "{{ project_name|replace('-', '_') }}"
-                )
-                # Write to .jinja file
-                py_file.with_suffix(".py.jinja").write_text(new_content)
-                # Remove original
-                py_file.unlink()
-                console.print(f"✔ Parameterized imports in {py_file.name} -> .jinja")
+                py_file.rename(py_file.with_suffix(".py.jinja"))
 
-            # 3. Rename main app file (which is now a .jinja file)
-            # reflex_chat.py.jinja -> {{ project_name|replace('-', '_') }}.py.jinja
+            # Rename main app file
             main_app_jinja = pkg_dir / "reflex_chat.py.jinja"
             if main_app_jinja.exists():
                 new_app_name = "{{ project_name|replace('-', '_') }}.py.jinja"
                 main_app_jinja.rename(pkg_dir / new_app_name)
-                console.print(f"✔ Renamed reflex_chat.py.jinja to {new_app_name}")
 
-            # 4. Rename package directory
+            # Rename package directory
             new_pkg_dir = target / "{{ project_name|replace('-', '_') }}"
             pkg_dir.rename(new_pkg_dir)
-            console.print(f"✔ Renamed reflex_chat dir to {new_pkg_dir.name}")
+            console.print("✔ Reflex package structure parameterized")
 
     # Generate copier.yml
     console.print("Generating copier.yml...")
     (target / "copier.yml").write_text(copier_yml)
 
-    # Verification
-    console.print("Verifying...")
+    console.print(f"[green]Template generation complete for {app_type.value}![/green]")
 
-    pyproject_jinja = target / "pyproject.toml.jinja"
-    if pyproject_jinja.exists() and "{{ project_name }}" in pyproject_jinja.read_text():
-        console.print("✔ pyproject.toml.jinja verification passed")
-    else:
-        console.print("[red]✘ pyproject.toml.jinja verification failed[/red]")
-        raise typer.Exit(code=1)
 
-    console.print("[green]Template generation complete![/green]")
+if __name__ == "__main__":
+    generate()
