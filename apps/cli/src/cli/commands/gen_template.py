@@ -91,8 +91,12 @@ def generate():
         content = content.replace(
             '"Chainlit Chat with OpenAI Functions Streaming"', '"{{ description }}"'
         )
-        pyproject_path.write_text(content)
-        console.print("✔ pyproject.toml parameterized")
+        # Write to .jinja file
+        jinja_path = target / "pyproject.toml.jinja"
+        jinja_path.write_text(content)
+        # Remove original
+        pyproject_path.unlink()
+        console.print("✔ pyproject.toml -> pyproject.toml.jinja parameterized")
 
     # Parameterize chainlit.md
     md_path = target / "chainlit.md"
@@ -101,18 +105,22 @@ def generate():
         content = content.replace(
             "# Welcome to Chainlit! 🚀🤖", "# {{ welcome_message }}"
         )
-        md_path.write_text(content)
-        console.print("✔ chainlit.md parameterized")
+        # Write to .jinja file
+        jinja_path = target / "chainlit.md.jinja"
+        jinja_path.write_text(content)
+        # Remove original
+        md_path.unlink()
+        console.print("✔ chainlit.md -> chainlit.md.jinja parameterized")
 
-    # Generate parameterized .env
-    console.print("Generating parameterized .env...")
+    # Generate parameterized .env.jinja
+    console.print("Generating parameterized .env.jinja...")
     env_content = (
         "OPENAI_API_KEY={{ openai_api_key }}\n"
         "OPENAI_BASE_URL={{ openai_base_url }}\n"
         "OPENAI_MODEL={{ openai_model }}\n"
     )
-    (target / ".env").write_text(env_content)
-    console.print("✔ .env generated")
+    (target / ".env.jinja").write_text(env_content)
+    console.print("✔ .env.jinja generated")
 
     # Generate copier.yml
     console.print("Generating copier.yml...")
@@ -121,11 +129,11 @@ def generate():
     # Verification
     console.print("Verifying...")
 
-    pyproject_valid = "{{ project_name }}" in pyproject_path.read_text()
-    if pyproject_valid:
-        console.print("✔ pyproject.toml validation passed")
+    pyproject_jinja = target / "pyproject.toml.jinja"
+    if pyproject_jinja.exists() and "{{ project_name }}" in pyproject_jinja.read_text():
+        console.print("✔ pyproject.toml.jinja verification passed")
     else:
-        console.print("[red]✘ pyproject.toml validation failed[/red]")
+        console.print("[red]✘ pyproject.toml.jinja verification failed[/red]")
         raise typer.Exit(code=1)
 
     # Check that app.py DOES NOT contain a default value string that might mislead
