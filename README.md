@@ -45,16 +45,24 @@ Use `just` to run any of the applications from the root directory:
 - `just chainlit-chat`: Runs the ChainLit chat app at http://localhost:8000
 - `just admin`: Runs the Streamlit admin app
 
-### 5. Template Generation
-The CLI provides a command to generate parameterized project templates (using [Copier](https://copier.readthedocs.io/)) from the existing apps.
+### 5. Template Management
+Parameterized project templates (using [Copier](https://copier.readthedocs.io/)) are generated from the living "Golden Master" apps in the `apps/` directory.
 
-To update the templates after making changes to the source apps:
+To update all templates after making changes to the source apps:
 ```bash
-# Generate Chainlit template
-uv run rf template generate --app chainlit-chat
-
-# Generate Reflex template
-uv run rf template generate --app reflex-chat
+just gen-templates
 ```
 
-The generated templates will be stored in the `templates/` directory.
+### 6. Using Templates
+To instantiate a new project from a template:
+```bash
+# Default (chainlit-chat)
+just create-app
+
+# Specific template and destination
+just create-app reflex-chat my-new-project
+```
+
+The generated project will include its own `Justfile` for local development:
+- `just sync`: Properly synchronizes dependencies using Python 3.13.
+- `just run`: Runs the application.
