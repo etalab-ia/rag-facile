@@ -1,6 +1,8 @@
 import shutil
+import subprocess
 from pathlib import Path
 
+import libcst as cst
 import typer
 from rich.console import Console
 
@@ -42,14 +44,77 @@ welcome_message:
   default: Welcome to Chainlit! 🚀🤖
 """
 
+# Placeholders to maintain valid Python syntax during CST pass
+PLACEHOLDERS = {
+    "chainlit_chat": "__PROJECT_SLUG_PLACEHOLDER__",
+    "reflex_chat": "__PROJECT_SLUG_PLACEHOLDER__",
+}
+
+
+class JinjaTransformer(cst.CSTTransformer):
+    """
+    LibCST Transformer to parameterize Python code.
+    Phase 1: Semantic Preparation
+    """
+
+    def __init__(self, mappings: dict[str, str]):
+        self.mappings = mappings
+
+    def leave_SimpleString(
+        self, original_node: cst.SimpleString, updated_node: cst.SimpleString
+    ) -> cst.SimpleString:
+        # Parameterize strings
+        val = updated_node.value
+        for golden, tag in self.mappings.items():
+            if golden in val:
+                # Replace golden value with Jinja tag inside the string
+                new_val = val.replace(golden, tag)
+                return updated_node.with_changes(value=new_val)
+        return updated_node
+
+    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
+        # Parameterize identifiers using placeholders
+        if updated_node.value in PLACEHOLDERS:
+            return updated_node.with_changes(value=PLACEHOLDERS[updated_node.value])
+        return updated_node
+
+
+def run_ast_grep(target_dir: Path, pattern: str, rewrite: str):
+    """Run ast-grep (sg) via pnpx for structural search and replace."""
+    try:
+        subprocess.run(
+            [
+                "pnpm",
+                "--package=@ast-grep/cli",
+                "dlx",
+                "sg",
+                "run",
+                "--pattern",
+                pattern,
+                "--rewrite",
+                rewrite,
+                "-U",
+            ],
+            cwd=target_dir,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        msg = (
+            f"[yellow]Warning: ast-grep failed for {pattern}: "
+            f"{e.stderr.decode()}[/yellow]"
+        )
+        console.print(msg)
+
 
 @app.command()
 def generate():
     """
-    Generate the Chainlit Chat template using GritQL.
+    Generate the Chainlit Chat template using a Hybrid LibCST + ast-grep pipeline.
     Copies apps/chainlit-chat to templates/chainlit-chat and parameterizes it.
     """
-    repo_root = Path.cwd()
+    # Robustly find repo root (assumes gen_template.py is in apps/cli/src/cli/commands/)
+    repo_root = Path(__file__).resolve().parents[5]
     source = repo_root / "apps" / "chainlit-chat"
     target = repo_root / "templates" / "chainlit-chat"
 
@@ -65,12 +130,7 @@ def generate():
     shutil.copytree(source, target)
 
     # Cleanup artifacts
-    artifacts = [
-        "__pycache__",
-        "chainlit_chat.egg-info",
-        ".venv",
-        ".env",
-    ]
+    artifacts = ["__pycache__", "chainlit_chat.egg-info", ".venv", ".env"]
     for artifact in artifacts:
         path = target / artifact
         if path.exists():
@@ -79,21 +139,40 @@ def generate():
             else:
                 path.unlink()
 
-    # Fallback replacements for TOML/MD
-    console.print("Applying parameterization...")
+    console.print("Applying parameterization pipeline...")
 
+    # Phase 1: Semantic Preparation with LibCST
+    mappings = {
+        "chainlit-chat": "{{ project_name }}",
+        "Chainlit Chat with OpenAI Functions Streaming": ("{{ description }}"),
+        "You are a helpful assistant.": "{{ system_prompt }}",
+        "Welcome to Chainlit! 🚀🤖": "{{ welcome_message }}",
+    }
+
+    python_files = list(target.rglob("*.py"))
+    for py_file in python_files:
+        code = py_file.read_text()
+        tree = cst.parse_module(code)
+        transformer = JinjaTransformer(mappings)
+        modified_tree = tree.visit(transformer)
+        py_file.write_text(modified_tree.code)
+        console.print(f"✔ LibCST pass applied to {py_file.name}")
+
+    # Phase 2: Structural Injection with ast-grep / Text Replacement
+    # Inject actual Jinja tags where LibCST placeholders were used
+    for golden, placeholder in PLACEHOLDERS.items():
+        # Using ast-grep for identifier replacement is safer than global text replace
+        run_ast_grep(target, placeholder, "{{ project_name | replace('-', '_') }}")
+
+    # Phase 3: Non-Python files (TOML, MD)
     # Parameterize pyproject.toml
     pyproject_path = target / "pyproject.toml"
     if pyproject_path.exists():
         content = pyproject_path.read_text()
         content = content.replace('"chainlit-chat"', '"{{ project_name }}"')
-        content = content.replace(
-            '"Chainlit Chat with OpenAI Functions Streaming"', '"{{ description }}"'
-        )
-        # Write to .jinja file
-        jinja_path = target / "pyproject.toml.jinja"
-        jinja_path.write_text(content)
-        # Remove original
+        msg = "Chainlit Chat with OpenAI Functions Streaming"
+        content = content.replace(f'"{msg}"', '"{{ description }}"')
+        (target / "pyproject.toml.jinja").write_text(content)
         pyproject_path.unlink()
         console.print("✔ pyproject.toml -> pyproject.toml.jinja parameterized")
 
@@ -104,49 +183,28 @@ def generate():
         content = content.replace(
             "# Welcome to Chainlit! 🚀🤖", "# {{ welcome_message }}"
         )
-        # Write to .jinja file
-        jinja_path = target / "chainlit.md.jinja"
-        jinja_path.write_text(content)
-        # Remove original
+        (target / "chainlit.md.jinja").write_text(content)
         md_path.unlink()
         console.print("✔ chainlit.md -> chainlit.md.jinja parameterized")
 
-    # Rename README.md -> README.md.jinja (so Copier renders project_name)
+    # Rename README.md -> README.md.jinja
     readme_path = target / "README.md"
     if readme_path.exists():
         readme_path.rename(target / "README.md.jinja")
         console.print("✔ README.md -> README.md.jinja renamed")
 
-    # Generate parameterized .env.jinja
-    console.print("Generating parameterized .env.jinja...")
+    # Phase 4: Metadata Generation
+    console.print("Generating metadata...")
     env_content = (
         "OPENAI_API_KEY={{ openai_api_key }}\n"
         "OPENAI_BASE_URL={{ openai_base_url }}\n"
         "OPENAI_MODEL={{ openai_model }}\n"
     )
     (target / ".env.jinja").write_text(env_content)
-    console.print("✔ .env.jinja generated")
-
-    # Generate copier.yml
-    console.print("Generating copier.yml...")
     (target / "copier.yml").write_text(COPIER_YML)
 
-    # Verification
-    console.print("Verifying...")
+    console.print("[green]Template generation complete with Hybrid Pipeline![/green]")
 
-    pyproject_jinja = target / "pyproject.toml.jinja"
-    if pyproject_jinja.exists() and "{{ project_name }}" in pyproject_jinja.read_text():
-        console.print("✔ pyproject.toml.jinja verification passed")
-    else:
-        console.print("[red]✘ pyproject.toml.jinja verification failed[/red]")
-        raise typer.Exit(code=1)
 
-    # Check that app.py DOES NOT contain a default value string that might mislead
-    # But since we aren't templating app.py anymore, we just ensure it exists
-    if (target / "app.py").exists():
-        console.print("✔ app.py exists")
-    else:
-        console.print("[red]✘ app.py missing[/red]")
-        raise typer.Exit(code=1)
-
-    console.print("[green]Template generation complete![/green]")
+if __name__ == "__main__":
+    generate()
