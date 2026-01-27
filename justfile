@@ -26,9 +26,17 @@ gen-templates:
 # Create a new application from a template using Copier
 # Usage: just create-app [app-type] [destination]
 create-app app_type="chainlit-chat" destination="":
-        @if [ "{{app_type}}" != "chainlit-chat" ] && [ "{{app_type}}" != "reflex-chat" ]; then \
-            echo "Error: Invalid app type '{{app_type}}'. Valid options are: chainlit-chat, reflex-chat"; \
-            exit 1; \
+        #!/usr/bin/env bash
+        set -euo pipefail
+        TYPE="{{app_type}}"
+        # Normalize input
+        if [[ "$TYPE" == "chainlit" ]] || [[ "$TYPE" == "chainlit-app" ]]; then TYPE="chainlit-chat"; fi
+        if [[ "$TYPE" == "reflex" ]] || [[ "$TYPE" == "reflex-app" ]]; then TYPE="reflex-chat"; fi
+
+        if [ "$TYPE" != "chainlit-chat" ] && [ "$TYPE" != "reflex-chat" ]; then
+            echo "Error: Invalid app type '{{app_type}}'. Valid options are: chainlit-chat, reflex-chat (or shorthands like 'chainlit', 'reflex')"
+            exit 1
         fi
-        @if [ ! -d "templates/{{app_type}}" ]; then just gen-templates; fi
-        uv run copier copy templates/{{app_type}} {{if destination == "" { app_type } else { destination}}}
+
+        if [ ! -d "templates/$TYPE" ]; then just gen-templates; fi
+        uv run copier copy templates/"$TYPE" "{{if destination == "" { "$TYPE" } else { destination}}}"
