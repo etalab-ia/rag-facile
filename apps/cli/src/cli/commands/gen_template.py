@@ -158,21 +158,43 @@ def generate(
         # Parameterize state.py for system_prompt
         # Path: reflex_chat/state.py
 
-        # 1. Parameterize state.py content
-        state_path = target / "reflex_chat" / "state.py"
-        if state_path.exists():
-            content = state_path.read_text()
-            content = content.replace(
-                '"You are a friendly chatbot named Reflex. Respond in markdown."',
-                '"{{ system_prompt }}"',
-            )
-            state_path.write_text(content)  # Write back to same file, rename dir later
-            console.print("✔ reflex_chat/state.py parameterized")
-
-        # 2. Rename package directory
+        # Parameterize state.py for system_prompt
+        # And also parameterize imports in all python files in the package
         pkg_dir = target / "reflex_chat"
         if pkg_dir.exists():
-            # We want Copier to rename this directory based on project_name
+            # 1. Parameterize state.py content (system prompt)
+            state_path = pkg_dir / "state.py"
+            if state_path.exists():
+                content = state_path.read_text()
+                content = content.replace(
+                    '"You are a friendly chatbot named Reflex. Respond in markdown."',
+                    '"{{ system_prompt }}"',
+                )
+                state_path.write_text(content)
+                console.print("✔ reflex_chat/state.py parameterized")
+
+            # 2. Parameterize imports in all .py files and rename to .jinja
+            # Replaces 'reflex_chat' with Jinja project name template.
+            for py_file in pkg_dir.rglob("*.py"):
+                content = py_file.read_text()
+                new_content = content.replace(
+                    "reflex_chat", "{{ project_name|replace('-', '_') }}"
+                )
+                # Write to .jinja file
+                py_file.with_suffix(".py.jinja").write_text(new_content)
+                # Remove original
+                py_file.unlink()
+                console.print(f"✔ Parameterized imports in {py_file.name} -> .jinja")
+
+            # 3. Rename main app file (which is now a .jinja file)
+            # reflex_chat.py.jinja -> {{ project_name|replace('-', '_') }}.py.jinja
+            main_app_jinja = pkg_dir / "reflex_chat.py.jinja"
+            if main_app_jinja.exists():
+                new_app_name = "{{ project_name|replace('-', '_') }}.py.jinja"
+                main_app_jinja.rename(pkg_dir / new_app_name)
+                console.print(f"✔ Renamed reflex_chat.py.jinja to {new_app_name}")
+
+            # 4. Rename package directory
             new_pkg_dir = target / "{{ project_name|replace('-', '_') }}"
             pkg_dir.rename(new_pkg_dir)
             console.print(f"✔ Renamed reflex_chat dir to {new_pkg_dir.name}")
