@@ -1,5 +1,4 @@
 import shutil
-import subprocess
 from pathlib import Path
 
 import typer
@@ -111,6 +110,12 @@ def generate():
         # Remove original
         md_path.unlink()
         console.print("✔ chainlit.md -> chainlit.md.jinja parameterized")
+
+    # Rename README.md -> README.md.jinja (so Copier renders project_name)
+    readme_path = target / "README.md"
+    if readme_path.exists():
+        readme_path.rename(target / "README.md.jinja")
+        console.print("✔ README.md -> README.md.jinja renamed")
 
     # Generate parameterized .env.jinja
     console.print("Generating parameterized .env.jinja...")
