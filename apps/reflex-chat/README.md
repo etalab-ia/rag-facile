@@ -20,14 +20,18 @@ Edit the `.env` file to add your `OPENAI_API_KEY` and `OPENAI_BASE_URL`.
 
 ### 2. Run the application
 
-From the **root of the monorepo**, you can run:
-
+If you are at the **root of the monorepo**:
 ```bash
 just reflex-chat
 ```
 
-Or from **this directory**:
+If you are in **this directory** (or using the generated template):
+```bash
+just sync  # Setup dependencies (Python 3.13)
+just run   # Run the application
+```
 
+Or directly using `uv`:
 ```bash
 uv run reflex run
 ```
