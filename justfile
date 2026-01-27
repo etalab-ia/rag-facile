@@ -14,3 +14,13 @@ admin:
 setup:
         uv sync
         uv lock
+
+# Generate all app templates
+gen-templates:
+        uv run --project apps/cli rf template generate --app chainlit-chat
+        uv run --project apps/cli rf template generate --app reflex-chat
+
+# Create a new application from a template using Copier
+# Usage: just create-app [app-type] [destination]
+create-app app_type="chainlit-chat" destination="":
+        uv run copier copy templates/{{app_type}} {{if destination == "" { app_type } else { destination}}}

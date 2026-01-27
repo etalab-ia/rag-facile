@@ -145,6 +145,12 @@ def generate(
             else:
                 path.unlink()
 
+    # Rename Justfile -> Justfile.jinja
+    just_path = target / "Justfile"
+    if just_path.exists():
+        just_path.rename(target / "Justfile.jinja")
+        console.print("✔ Justfile -> Justfile.jinja renamed")
+
     console.print("Applying parameterization pipeline...")
 
     # Phase 1: Semantic Preparation with LibCST

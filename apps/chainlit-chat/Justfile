@@ -1,0 +1,7 @@
+# Sync dependencies
+sync:
+    uv sync --python 3.13
+
+# Run the Chainlit application
+run:
+    uv run chainlit run app.py -w
