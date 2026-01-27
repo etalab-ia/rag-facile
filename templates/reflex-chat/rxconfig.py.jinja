@@ -8,7 +8,7 @@ load_dotenv(Path(__file__).parent / ".env")
 import reflex as rx  # noqa: E402
 
 config = rx.Config(
-    app_name="{{ project_name | replace('-', '_') }}",
+    app_name="{{ project_name|replace('-', '_') }}",
     plugins=[
         rx.plugins.SitemapPlugin(),
         rx.plugins.TailwindV4Plugin(),

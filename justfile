@@ -1,3 +1,6 @@
+default:
+	@just --list
+
 # Run the Reflex Chat application
 reflex-chat:
 	cd apps/reflex-chat && uv run reflex run
