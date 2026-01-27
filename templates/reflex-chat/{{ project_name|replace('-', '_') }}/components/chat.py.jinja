@@ -1,7 +1,7 @@
 import reflex as rx
 from reflex.constants.colors import ColorType
 
-from {{ project_name|replace('-', '_') }}.state import QA, State
+from {{ project_name | replace('-', '_') }}.state import QA, State
 
 
 def message_content(text: str, color: ColorType) -> rx.Component:
