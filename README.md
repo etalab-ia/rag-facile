@@ -26,7 +26,38 @@ The project is organized as a monorepo with the following foundational component
 ### 1. Prerequisite
 Ensure you have `uv` and `just` installed on your system.
 
-### 2. Setup
+### 2. Install the CLI (Optional)
+You can install the RAG Facile CLI (`rf`) globally using `uv`:
+
+#### Option 1: Persistent Installation (Recommended)
+Install once and use everywhere:
+```bash
+uv tool install rf --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli
+```
+
+Then use the tool directly:
+```bash
+rf version
+rf template generate --app chainlit-chat
+```
+
+To upgrade the CLI:
+```bash
+uv tool install rf --force --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli
+```
+
+#### Option 2: One-time Usage
+Run directly without installing:
+```bash
+uvx --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli rf version
+```
+
+**Benefits of persistent installation:**
+- Tool stays installed and available in PATH
+- No need to create shell aliases
+- Better tool management with `uv tool list`, `uv tool upgrade`, `uv tool uninstall`
+
+### 3. Setup
 Install all dependencies and prepare the workspace:
 ```bash
 just setup
