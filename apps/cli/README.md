@@ -1,10 +1,11 @@
 # RAG Facile CLI
 
-The CLI provides utility commands for managing the RAG Facile ecosystem.
+The `rf` CLI provides utility commands for managing the RAG Facile ecosystem.
 
 ## Installation
 
 ### Option 1: Persistent Installation (Recommended)
+
 Install globally using `uv`:
 
 ```bash
@@ -25,34 +26,34 @@ uv tool install rf --force --from git+https://github.com/etalab-ia/rag-facile.gi
 ```
 
 ### Option 2: One-time Usage
+
 Run directly without installing:
 
 ```bash
 uvx --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli rf [command]
 ```
 
-### Option 3: As Part of Monorepo
-The CLI is part of the `rag-facile` monorepo workspace:
-
-```bash
-uv sync
-uv run rf [command]
-```
-
 ## Usage
-When installed globally, the CLI is accessible via the `rf` command:
 
 ```bash
-rf [command]
+# Show all available commands
+rf --help
+
+# Show help for a specific command
+rf template generate --help
+
+# Check version
+rf version
 ```
 
-### Commands
+## Commands
 
-#### `template generate`
-Generates a parameterized [Copier](https://copier.readthedocs.io/) template from an existing application in the `apps/` directory.
+### `template generate`
+
+Generates a parameterized [Copier](https://copier.readthedocs.io/) template from an existing application.
 
 ```bash
-uv run rf template generate --app <app-type>
+rf template generate --app <app-type>
 ```
 
 **Arguments:**
@@ -60,15 +61,20 @@ uv run rf template generate --app <app-type>
     - `chainlit-chat`
     - `reflex-chat`
 
-**Description:**
-1. Copies the source application to `templates/<app-type>`.
-2. Removes development artifacts (`.venv`, `.env`, `__pycache__`, etc.).
-3. Applies Jinja2 parameterization to key files (`pyproject.toml`, `.env`, `README.md`, etc.).
-4. For Reflex apps, automatically renames the main package and updates internal imports.
-5. Generates the `copier.yml` configuration.
+**Process:**
+1. Copies the source application to `templates/<app-type>`
+2. Removes development artifacts (`.venv`, `.env`, `__pycache__`, etc.)
+3. Applies Jinja2 parameterization to key files (`pyproject.toml`, `.env`, `README.md`, etc.)
+4. For Reflex apps, automatically renames the main package and updates internal imports
+5. Generates the `copier.yml` configuration
 
 ## Development
+
 The CLI is built with [Typer](https://typer.tiangolo.com/).
-Source code is located in `src/cli/`.
-Command definitions are in `src/cli/commands/`.
-Copier configurations are in `src/cli/configs/`.
+
+For development setup and contribution guidelines, see the main [CONTRIBUTING.md](../../CONTRIBUTING.md) file.
+
+**Source code structure:**
+- `src/cli/` - Main CLI package
+- `src/cli/commands/` - Command definitions
+- `src/cli/configs/` - Copier configurations
