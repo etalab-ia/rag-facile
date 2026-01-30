@@ -103,7 +103,7 @@ async def main(message: cl.Message):
     file_content = ""
     if message.elements:
         for element in message.elements:
-            if element.name.endswith(".pdf"):
+            if element.name.endswith(".pdf") and element.path:
                 try:
                     reader = PdfReader(element.path)
                     text = ""
