@@ -39,4 +39,15 @@ create-app app_type="chainlit-chat" destination="":
         fi
 
         if [ ! -d "templates/$TYPE" ]; then just gen-templates; fi
-        uv run copier copy templates/"$TYPE" "{{if destination == "" { "$TYPE" } else { destination}}}"
+
+        # Check for API Key in environment
+        API_KEY_ARG=""
+        if [ -n "${ALBERT_API_KEY:-}" ]; then
+            API_KEY_ARG="-d openai_api_key=$ALBERT_API_KEY"
+            echo "Using ALBERT_API_KEY from environment"
+        elif [ -n "${OPENAI_API_KEY:-}" ]; then
+            API_KEY_ARG="-d openai_api_key=$OPENAI_API_KEY"
+            echo "Using OPENAI_API_KEY from environment"
+        fi
+
+        uv run copier copy $API_KEY_ARG templates/"$TYPE" "{{if destination == "" { "$TYPE" } else { destination}}}"

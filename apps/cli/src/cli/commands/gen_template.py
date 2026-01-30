@@ -237,6 +237,9 @@ def generate(
                 '"Reflex Chat Application"', '"{{ description }}"'
             )
 
+        # Add tool.uv.package = true to suppress warnings about entry points
+        content += "\n[tool.uv]\npackage = true\n"
+
         (target / "pyproject.toml.jinja").write_text(content)
         pyproject_path.unlink()
         console.print("✔ pyproject.toml -> pyproject.toml.jinja parameterized")

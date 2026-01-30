@@ -10,7 +10,7 @@ description:
 
 openai_api_key:
   type: str
-  help: What is your OpenAI API Key? (Get one at https://albert.sites.beta.gouv.fr/access/)
+  help: What is your Albert API Key? (Get one at https://albert.sites.beta.gouv.fr/access/)
 
 openai_base_url:
   type: str
