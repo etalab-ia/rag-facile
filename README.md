@@ -61,12 +61,17 @@ rf version
 
 ## Components
 
-RAG Facile includes several application templates:
+RAG Facile provides application templates for building RAG applications:
+
+### Currently Available
 
 - **ChainLit Chat**: A chat interface built with ChainLit
 - **Reflex Chat**: Interactive chat built with Reflex
-- **Admin UI**: Administration interface
-- **Ingestion Pipeline**: Data processing pipeline
+
+### Planned Templates
+
+- **Admin UI**: Administration interface (coming soon)
+- **Ingestion Pipeline**: Data processing pipeline (coming soon)
 
 ## Contributing
 
