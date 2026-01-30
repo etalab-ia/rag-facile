@@ -9,7 +9,7 @@ dependencies = [
     "admin",
     "ingestion",
     "cli",
-    "sample-package",
+    "pdf-context",
     "reflex-chat",
 ]
 
@@ -18,7 +18,7 @@ chainlit-chat = { workspace = true }
 admin = { workspace = true }
 ingestion = { workspace = true }
 cli = { workspace = true }
-sample-package = { workspace = true }
+pdf-context = { workspace = true }
 reflex-chat = { workspace = true }
 
 [dependency-groups]

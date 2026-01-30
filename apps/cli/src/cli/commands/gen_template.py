@@ -87,13 +87,23 @@ def run_ast_grep(target_dir: Path, pattern: str, rewrite: str):
         )
     except subprocess.CalledProcessError as e:
         # sg returns 1 if no matches are found, which we want to ignore
-        if e.returncode == 1 and not e.stderr.decode().strip():
+        # However, pnpm dlx might print installation progress to stderr,
+        # which we also want to ignore
+        stderr = e.stderr.decode().strip()
+
+        # Filter out common pnpm/installation noise
+        noise_markers = ["Progress:", "Packages:", "+++", "postinstall"]
+        clean_lines = [
+            line
+            for line in stderr.splitlines()
+            if not any(marker in line for marker in noise_markers)
+        ]
+
+        # If exit code is 1 (no matches) and there are no other errors, ignore it
+        if e.returncode == 1 and not clean_lines:
             return
 
-        msg = (
-            f"[yellow]Warning: ast-grep failed for {pattern}: "
-            f"{e.stderr.decode().strip()}[/yellow]"
-        )
+        msg = f"[yellow]Warning: ast-grep failed for {pattern}: {stderr}[/yellow]"
         console.print(msg)
 
 
@@ -122,6 +132,14 @@ def generate(
 
     # Copy source to target
     shutil.copytree(source, target)
+
+    # Bundle pdf-context package for chainlit-chat
+    if app_type == AppType.chainlit:
+        pdf_pkg_src = repo_root / "packages" / "pdf-context"
+        if pdf_pkg_src.exists():
+            pkg_target = target / "packages" / "pdf-context"
+            shutil.copytree(pdf_pkg_src, pkg_target)
+            console.print("✔ Bundled pdf-context package")
 
     # Cleanup artifacts
     artifacts = [
@@ -204,6 +222,13 @@ def generate(
     if pyproject_path.exists():
         content = pyproject_path.read_text()
         content = content.replace(f'"{app_type.value}"', '"{{ project_name }}"')
+
+        # Rewrite pdf-context dependency to local path
+        content = content.replace(
+            "pdf-context = { workspace = true }",
+            'pdf-context = { path = "packages/pdf-context" }',
+        )
+
         if app_type == AppType.chainlit:
             msg = "Chainlit Chat with OpenAI Functions Streaming"
             content = content.replace(f'"{msg}"', '"{{ description }}"')

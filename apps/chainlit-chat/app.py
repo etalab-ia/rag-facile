@@ -6,7 +6,7 @@ import chainlit as cl
 import engineio
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
-from pypdf import PdfReader
+from pdf_context import process_pdf_file
 
 # Increase the number of packets allowed in a single payload to prevent "Too
 # many packets in payload" errors. This is especially helpful during streaming
@@ -105,19 +105,9 @@ async def main(message: cl.Message):
         for element in message.elements:
             if element.name.endswith(".pdf") and element.path:
                 try:
-                    reader = PdfReader(element.path)
-                    text = ""
-                    for page in reader.pages:
-                        text += page.extract_text() + "\n"
-                    file_content += (
-                        f"\n\n--- Content of attached file '{element.name}' ---\n"
-                    )
-                    file_content += text
-                    file_content += "\n--- End of file ---\n"
+                    file_content += process_pdf_file(element.path, element.name)
                 except Exception as e:
-                    file_content += (
-                        f"\n\nError reading PDF '{element.name}': {str(e)}\n"
-                    )
+                    file_content += f"\n\nError reading PDF '{element.name}': {e!s}\n"
 
     user_message = message.content
     if file_content:
