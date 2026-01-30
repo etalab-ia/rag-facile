@@ -211,7 +211,5 @@ marimo/_lsp/
 # Templates (generated dynamically)
 /templates/
 
-# (Optional) If you want to be extra safe, you can ignore the whole folder
-.letta/*
-# and strictly allow the shared settings file
-!.letta/settings.json
+# Letta local files
+.letta

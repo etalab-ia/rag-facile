@@ -3,17 +3,47 @@
 The CLI provides utility commands for managing the RAG Facile ecosystem.
 
 ## Installation
-The CLI is part of the `rag-facile` monorepo workspace.
+
+### Option 1: Persistent Installation (Recommended)
+Install globally using `uv`:
+
+```bash
+uv tool install rf --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli
+```
+
+Then use the tool directly:
+
+```bash
+rf version
+rf template generate --app chainlit-chat
+```
+
+To upgrade:
+
+```bash
+uv tool install rf --force --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli
+```
+
+### Option 2: One-time Usage
+Run directly without installing:
+
+```bash
+uvx --from git+https://github.com/etalab-ia/rag-facile.git#subdirectory=apps/cli rf [command]
+```
+
+### Option 3: As Part of Monorepo
+The CLI is part of the `rag-facile` monorepo workspace:
 
 ```bash
 uv sync
+uv run rf [command]
 ```
 
 ## Usage
-The CLI is accessible via the `rf` command when running through `uv`:
+When installed globally, the CLI is accessible via the `rf` command:
 
 ```bash
-uv run rf [command]
+rf [command]
 ```
 
 ### Commands
