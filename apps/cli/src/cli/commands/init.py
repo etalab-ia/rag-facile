@@ -2,11 +2,12 @@
 
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated
 
 import typer
-import yaml
 from rich.console import Console
 
 app = typer.Typer()
@@ -18,38 +19,57 @@ TEMPLATES_SOURCE = Path(__file__).resolve().parents[5] / ".moon" / "templates"
 
 def _slugify(name: str) -> str:
     """Convert a name to a valid Python package name (PEP 508 compliant)."""
-    # Lowercase and replace spaces/underscores with hyphens
     slug = name.lower().replace(" ", "-").replace("_", "-")
-    # Remove any characters that aren't alphanumeric or hyphens
     slug = re.sub(r"[^a-z0-9-]", "", slug)
-    # Collapse multiple hyphens
     slug = re.sub(r"-+", "-", slug)
-    # Strip leading/trailing hyphens
     slug = slug.strip("-")
     return slug or "my-project"
 
 
-def _get_workspace_yml() -> str:
-    """Generate the .moon/workspace.yml content."""
-    config = {
-        "projects": ["apps/*", "packages/*"],
-        "vcs": {"manager": "git", "defaultBranch": "main"},
-        "telemetry": False,
-        "generator": {"templates": [".moon/templates"]},
-    }
-    return yaml.dump(config, sort_keys=False, allow_unicode=True)
+def _is_moon_installed() -> bool:
+    """Check if moon is installed and available."""
+    try:
+        subprocess.run(
+            ["moon", "--version"], check=True, capture_output=True, text=True
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
 
 
-def _get_toolchain_yml(python_version: str = "3.13") -> str:
-    """Generate the .moon/toolchain.yml content."""
-    config = {
-        "$schema": "https://moonrepo.dev/schemas/toolchain.json",
-        "python": {"version": python_version, "packageManager": "uv"},
-    }
-    return yaml.dump(config, sort_keys=False, allow_unicode=True)
+def _install_moon() -> bool:
+    """Attempt to install moon. Returns True if successful."""
+    console.print("\n[bold]Installing moon...[/bold]")
+
+    # Detect platform and offer appropriate install method
+    if sys.platform == "darwin":
+        # macOS - try homebrew first
+        try:
+            subprocess.run(["brew", "--version"], check=True, capture_output=True)
+            console.print("  Using Homebrew...")
+            result = subprocess.run(
+                ["brew", "install", "moonrepo/tap/moon"],
+                check=True,
+                capture_output=False,
+            )
+            return result.returncode == 0
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
+    # Fall back to official install script (works on macOS, Linux, WSL)
+    console.print("  Using official install script...")
+    try:
+        result = subprocess.run(
+            ["bash", "-c", "curl -fsSL https://moonrepo.dev/install/moon.sh | bash"],
+            check=True,
+            capture_output=False,
+        )
+        return result.returncode == 0
+    except subprocess.CalledProcessError:
+        return False
 
 
-def _get_pyproject_toml(project_name: str, python_version: str = "3.13") -> str:
+def _get_pyproject_toml(project_name: str, python_version: str) -> str:
     """Generate the root pyproject.toml content."""
     return f'''[project]
 name = "{project_name}"
@@ -244,12 +264,32 @@ def init(
         raw_name = target.parent.name if target.name == "." else target.name
     project_name = _slugify(raw_name)
 
+    # Check if moon is installed
+    if not _is_moon_installed():
+        console.print("[yellow]Moon is not installed.[/yellow]")
+        console.print(
+            "Moon is required for workspace management. "
+            "Learn more at https://moonrepo.dev"
+        )
+        if typer.confirm("Would you like to install moon now?", default=True):
+            if not _install_moon():
+                console.print(
+                    "[red]Failed to install moon.[/red] "
+                    "Please install manually: https://moonrepo.dev/docs/install"
+                )
+                raise typer.Exit(code=1)
+            console.print("[green]Moon installed successfully![/green]\n")
+        else:
+            console.print(
+                "Please install moon manually: https://moonrepo.dev/docs/install"
+            )
+            raise typer.Exit(code=1)
+
     # Create target directory if it doesn't exist
     if not target.exists():
         target.mkdir(parents=True)
         console.print(f"Created directory: {display_path}")
     elif any(target.iterdir()) and not force:
-        # Check if directory is not empty
         if not typer.confirm(
             f"Directory {display_path} is not empty. Continue anyway?", default=False
         ):
@@ -262,20 +302,45 @@ def init(
         console.print(f'  [dim](slugified from "{raw_name}")[/dim]')
     console.print()
 
-    # Create directory structure
-    dirs_to_create = [
-        target / ".moon" / "templates",
-        target / "apps",
-        target / "packages",
-    ]
-    for dir_path in dirs_to_create:
-        dir_path.mkdir(parents=True, exist_ok=True)
-        console.print(f"  [dim]Created:[/dim] {dir_path.relative_to(target)}/")
+    # Step 1: Run moon init
+    console.print("[bold]Running moon init...[/bold]")
+    moon_dir = target / ".moon"
+    if not moon_dir.exists():
+        try:
+            subprocess.run(
+                ["moon", "init", "--to", str(target), "--yes", "--minimal"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            console.print("  [green]Created:[/green] .moon/ workspace")
+        except subprocess.CalledProcessError as e:
+            console.print(f"[red]moon init failed:[/red] {e.stderr}")
+            raise typer.Exit(code=1)
+    else:
+        console.print("  [dim]Skipped:[/dim] .moon/ already exists")
 
-    # Generate configuration files
+    # Step 2: Create apps/ and packages/ directories
+    for dir_name in ["apps", "packages"]:
+        dir_path = target / dir_name
+        dir_path.mkdir(exist_ok=True)
+        console.print(f"  [green]Created:[/green] {dir_name}/")
+
+    # Step 3: Configure moon for templates
+    workspace_yml = moon_dir / "workspace.yml"
+    if workspace_yml.exists():
+        content = workspace_yml.read_text()
+        # Add generator config if not present
+        if "generator:" not in content:
+            content += "\ngenerator:\n  templates:\n    - '.moon/templates'\n"
+            workspace_yml.write_text(content)
+            console.print(
+                "  [green]Updated:[/green] .moon/workspace.yml (added generator)"
+            )
+
+    # Step 4: Add rag-facile specific files
+    console.print("\n[bold]Adding RAG Facile files...[/bold]")
     files_to_create = {
-        ".moon/workspace.yml": _get_workspace_yml(),
-        ".moon/toolchain.yml": _get_toolchain_yml(python_version),
         "pyproject.toml": _get_pyproject_toml(project_name, python_version),
         "README.md": _get_readme(project_name),
         ".gitignore": _get_gitignore(),
@@ -291,9 +356,11 @@ def init(
         full_path.write_text(content)
         console.print(f"  [green]Created:[/green] {file_path}")
 
-    # Copy templates from rag-facile package
+    # Step 5: Copy templates
+    console.print("\n[bold]Copying templates...[/bold]")
     if TEMPLATES_SOURCE.exists():
         templates_target = target / ".moon" / "templates"
+        templates_target.mkdir(parents=True, exist_ok=True)
         for template_dir in TEMPLATES_SOURCE.iterdir():
             if template_dir.is_dir():
                 dest = templates_target / template_dir.name
@@ -311,15 +378,13 @@ def init(
                 console.print(f"  [green]Copied:[/green] template {template_dir.name}")
     else:
         console.print(
-            "\n[yellow]Warning:[/yellow] Could not find templates source. "
+            "  [yellow]Warning:[/yellow] Could not find templates source. "
             "Templates will need to be added manually."
         )
 
-    # Initialize git if not already a git repo
+    # Step 6: Initialize git if not already a git repo
     git_dir = target / ".git"
     if not git_dir.exists():
-        import subprocess
-
         try:
             subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
             console.print("  [green]Initialized:[/green] git repository")
