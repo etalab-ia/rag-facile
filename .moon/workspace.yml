@@ -7,3 +7,7 @@ vcs:
   defaultBranch: 'main'
 
 telemetry: false
+
+generator:
+  templates:
+    - '.moon/templates'

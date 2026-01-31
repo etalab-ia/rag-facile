@@ -1,11 +1,11 @@
 import shutil
-import subprocess
 from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
 import libcst as cst
 import typer
+import yaml
 from rich.console import Console
 
 app = typer.Typer()
@@ -17,16 +17,88 @@ class AppType(str, Enum):
     reflex = "reflex-chat"
 
 
-def _read_config(app_type: AppType) -> str:
-    """Read the copier.yml content from the package resources."""
-    # Robustly find repo root (assumes gen_template.py is in apps/cli/src/cli/commands/)
-    repo_root = Path(__file__).resolve().parents[5]
-    config_dir = repo_root / "apps" / "cli" / "src" / "cli" / "configs"
-
+def _generate_template_yml(app_type: AppType) -> str:
+    """Generate the template.yml content for Moon."""
     if app_type == AppType.chainlit:
-        return (config_dir / "chainlit_copier.yml").read_text()
+        config = {
+            "title": "Chainlit Chat",
+            "description": "A Chainlit Chat Application with OpenAI Functions",
+            "variables": {
+                "project_name": {
+                    "type": "string",
+                    "default": "my-chainlit-app",
+                    "prompt": "What is the name of your project?",
+                },
+                "description": {
+                    "type": "string",
+                    "default": "A Chainlit Chat Application",
+                    "prompt": "Short description of the project",
+                },
+                "openai_api_key": {
+                    "type": "string",
+                    "prompt": "What is your Albert API Key? (Get one at https://albert.sites.beta.gouv.fr/access/)",
+                },
+                "openai_base_url": {
+                    "type": "string",
+                    "default": "https://albert.api.etalab.gouv.fr/v1",
+                    "prompt": "What is your OpenAI Base URL?",
+                },
+                "openai_model": {
+                    "type": "string",
+                    "default": "openweight-large",
+                    "prompt": "Default OpenAI model to use",
+                },
+                "system_prompt": {
+                    "type": "string",
+                    "default": "You are a helpful assistant.",
+                    "prompt": "Initial system prompt for the assistant",
+                },
+                "welcome_message": {
+                    "type": "string",
+                    "default": "Welcome to Chainlit! 🚀🤖",
+                    "prompt": "Header text for the welcome screen",
+                },
+            },
+        }
     else:
-        return (config_dir / "reflex_copier.yml").read_text()
+        config = {
+            "title": "Reflex Chat",
+            "description": "A Reflex Chat Application",
+            "variables": {
+                "project_name": {
+                    "type": "string",
+                    "default": "my-reflex-app",
+                    "prompt": "What is the name of your project?",
+                },
+                "description": {
+                    "type": "string",
+                    "default": "A Reflex Chat Application",
+                    "prompt": "Short description of the project",
+                },
+                "openai_api_key": {
+                    "type": "string",
+                    "prompt": "What is your Albert API Key? (Get one at https://albert.sites.beta.gouv.fr/access/)",
+                },
+                "openai_base_url": {
+                    "type": "string",
+                    "default": "https://albert.api.etalab.gouv.fr/v1",
+                    "prompt": "What is your OpenAI Base URL?",
+                },
+                "openai_model": {
+                    "type": "string",
+                    "default": "openweight-large",
+                    "prompt": "Default OpenAI model to use",
+                },
+                "system_prompt": {
+                    "type": "string",
+                    "default": (
+                        "You are a friendly chatbot named Reflex. Respond in markdown."
+                    ),
+                    "prompt": "Initial system prompt for the assistant",
+                },
+            },
+        }
+    return yaml.dump(config, sort_keys=False, allow_unicode=True)
 
 
 # Placeholders to maintain valid Python syntax during CST pass
@@ -64,49 +136,6 @@ class JinjaTransformer(cst.CSTTransformer):
         return updated_node
 
 
-def run_ast_grep(target_dir: Path, pattern: str, rewrite: str):
-    """Run ast-grep (sg) via pnpx for structural search and replace."""
-    try:
-        subprocess.run(
-            [
-                "pnpm",
-                "--package=@ast-grep/cli",
-                "dlx",
-                "sg",
-                "run",
-                "--pattern",
-                pattern,
-                "--rewrite",
-                rewrite,
-                "-U",
-                ".",
-            ],
-            cwd=target_dir,
-            check=True,
-            capture_output=True,
-        )
-    except subprocess.CalledProcessError as e:
-        # sg returns 1 if no matches are found, which we want to ignore
-        # However, pnpm dlx might print installation progress to stderr,
-        # which we also want to ignore
-        stderr = e.stderr.decode().strip()
-
-        # Filter out common pnpm/installation noise
-        noise_markers = ["Progress:", "Packages:", "+++", "postinstall"]
-        clean_lines = [
-            line
-            for line in stderr.splitlines()
-            if not any(marker in line for marker in noise_markers)
-        ]
-
-        # If exit code is 1 (no matches) and there are no other errors, ignore it
-        if e.returncode == 1 and not clean_lines:
-            return
-
-        msg = f"[yellow]Warning: ast-grep failed for {pattern}: {stderr}[/yellow]"
-        console.print(msg)
-
-
 @app.command()
 def generate(
     app_type: Annotated[
@@ -115,33 +144,18 @@ def generate(
 ):
     """
     Generate a Chat app template using a Hybrid LibCST + ast-grep pipeline.
-    Copies apps/<app_type> to templates/<app_type> and parameterizes it.
+    Copies apps/<app_type> to .moon/templates/<app_type> and parameterizes it.
     """
     # Robustly find repo root (assumes gen_template.py is in apps/cli/src/cli/commands/)
     repo_root = Path(__file__).resolve().parents[5]
     source = repo_root / "apps" / app_type.value
-    target = repo_root / "templates" / app_type.value
+    target = repo_root / ".moon" / "templates" / app_type.value
 
     if not source.exists():
         console.print(f"[red]Error: Source directory {source} does not exist.[/red]")
         raise typer.Exit(code=1)
 
-    console.print(f"Recreating {target}...")
-    if target.exists():
-        shutil.rmtree(target)
-
-    # Copy source to target
-    shutil.copytree(source, target)
-
-    # Bundle pdf-context package for chainlit-chat and reflex-chat
-    if app_type in [AppType.chainlit, AppType.reflex]:
-        pdf_pkg_src = repo_root / "packages" / "pdf-context"
-        if pdf_pkg_src.exists():
-            pkg_target = target / "packages" / "pdf-context"
-            shutil.copytree(pdf_pkg_src, pkg_target)
-            console.print("✔ Bundled pdf-context package")
-
-    # Cleanup artifacts
+    # Cleanup artifacts patterns
     artifacts = [
         "__pycache__",
         "*.egg-info",
@@ -156,25 +170,34 @@ def generate(
     else:
         artifacts.extend([".chainlit"])
 
-    for artifact_pattern in artifacts:
-        for path in target.rglob(artifact_pattern):
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink()
+    console.print(f"Recreating {target}...")
+    if target.exists():
+        shutil.rmtree(target)
 
-    # Rename Justfile -> Justfile.jinja
-    just_path = target / "Justfile"
-    if just_path.exists():
-        just_path.rename(target / "Justfile.jinja")
-        console.print("✔ Justfile -> Justfile.jinja renamed")
+    # Copy source to target, ignoring artifacts
+    shutil.copytree(source, target, ignore=shutil.ignore_patterns(*artifacts))
 
+    # Bundle pdf-context package for chainlit-chat and reflex-chat
+    if app_type in [AppType.chainlit, AppType.reflex]:
+        pdf_pkg_src = repo_root / "packages" / "pdf-context"
+        if pdf_pkg_src.exists():
+            pkg_target = target / "packages" / "pdf-context"
+            # Ignore same artifacts in pdf-context bundle
+            shutil.copytree(
+                pdf_pkg_src, pkg_target, ignore=shutil.ignore_patterns(*artifacts)
+            )
+            console.print("✔ Bundled pdf-context package")
+
+    # Moon renders all files, so we don't strictly need .jinja suffixes.
+    # We'll remove them to ensure the output files have the correct names.
     console.print("Applying parameterization pipeline...")
 
     # Phase 1: Semantic Preparation with LibCST
     mappings = {
         app_type.value: "{{ project_name }}",
-        app_type.value.replace("-", "_"): "{{ project_name | replace('-', '_') }}",
+        app_type.value.replace(
+            "-", "_"
+        ): "{{ project_name | replace(from='-', to='_') }}",
         "You are a helpful assistant.": "{{ system_prompt }}",
         "You are a friendly chatbot named Reflex. Respond in markdown.": (
             "{{ system_prompt }}"
@@ -209,13 +232,24 @@ def generate(
                 f"[yellow]Warning: LibCST failed for {py_file.name}: {e}[/yellow]"
             )
 
-    # Phase 2: Structural Injection with ast-grep
-    # Inject actual Jinja tags where LibCST placeholders were used
+    # Phase 2: Structural Injection (Replacing placeholders)
+    # Inject actual Tera tags where LibCST placeholders were used
     for placeholder in set(PLACEHOLDERS.values()):
-        run_ast_grep(target, placeholder, "{{ project_name | replace('-', '_') }}")
+        replacement = "{{ project_name | replace(from='-', to='_') }}"
+        for file_path in target.rglob("*"):
+            if file_path.is_file() and not file_path.suffix == ".so":
+                try:
+                    content = file_path.read_text()
+                    if placeholder in content:
+                        file_path.write_text(content.replace(placeholder, replacement))
+                        console.print(
+                            f"✔ Placeholder {placeholder} replaced in {file_path.name}"
+                        )
+                except (UnicodeDecodeError, PermissionError):
+                    continue
 
     # Phase 3: App-Specific Parameterization and Metadata
-    copier_yml = _read_config(app_type)
+    template_yml = _generate_template_yml(app_type)
 
     # Parameterize pyproject.toml
     pyproject_path = target / "pyproject.toml"
@@ -240,24 +274,17 @@ def generate(
         # Add tool.uv.package = true to suppress warnings about entry points
         content += "\n[tool.uv]\npackage = true\n"
 
-        (target / "pyproject.toml.jinja").write_text(content)
-        pyproject_path.unlink()
-        console.print("✔ pyproject.toml -> pyproject.toml.jinja parameterized")
+        pyproject_path.write_text(content)
+        console.print("✔ pyproject.toml parameterized")
 
-    # Rename README.md -> README.md.jinja
-    readme_path = target / "README.md"
-    if readme_path.exists():
-        readme_path.rename(target / "README.md.jinja")
-        console.print("✔ README.md -> README.md.jinja renamed")
-
-    # Generate parameterized .env.jinja
-    console.print("Generating parameterized .env.jinja...")
+    # Generate parameterized .env.template
+    console.print("Generating parameterized .env.template...")
     env_content = (
         "OPENAI_API_KEY={{ openai_api_key }}\n"
         "OPENAI_BASE_URL={{ openai_base_url }}\n"
         "OPENAI_MODEL={{ openai_model }}\n"
     )
-    (target / ".env.jinja").write_text(env_content)
+    (target / ".env.template").write_text(env_content)
 
     if app_type == AppType.chainlit:
         # Parameterize chainlit.md
@@ -267,9 +294,8 @@ def generate(
             content = content.replace(
                 "# Welcome to Chainlit! 🚀🤖", "# {{ welcome_message }}"
             )
-            (target / "chainlit.md.jinja").write_text(content)
-            md_path.unlink()
-            console.print("✔ chainlit.md -> chainlit.md.jinja parameterized")
+            md_path.write_text(content)
+            console.print("✔ chainlit.md parameterized")
 
     elif app_type == AppType.reflex:
         # Parameterize rxconfig.py
@@ -278,36 +304,32 @@ def generate(
             content = rxconfig_path.read_text()
             content = content.replace(
                 'app_name="reflex_chat"',
-                "app_name=\"{{ project_name|replace('-', '_') }}\"",
+                "app_name=\"{{ project_name | replace(from='-', to='_') }}\"",
             )
-            (target / "rxconfig.py.jinja").write_text(content)
-            rxconfig_path.unlink()
-            console.print("✔ rxconfig.py -> rxconfig.py.jinja parameterized")
+            rxconfig_path.write_text(content)
+            console.print("✔ rxconfig.py parameterized")
 
-        # Reflex specific directory renames and file extensions
+        # Reflex specific directory renames
         pkg_dir = target / "reflex_chat"
         if pkg_dir.exists():
-            # Rename all .py files to .py.jinja in the package dir
-            for py_file in pkg_dir.rglob("*.py"):
-                py_file.rename(py_file.with_suffix(".py.jinja"))
-
             # Rename main app file
-            main_app_jinja = pkg_dir / "reflex_chat.py.jinja"
-            if main_app_jinja.exists():
-                new_app_name = "{{ project_name|replace('-', '_') }}.py.jinja"
-                main_app_jinja.rename(pkg_dir / new_app_name)
+            main_app = pkg_dir / "reflex_chat.py"
+            if main_app.exists():
+                # Use Moon path interpolation syntax [var]
+                new_app_name = "[project_name | replace(from='-', to='_')].py"
+                main_app.rename(pkg_dir / new_app_name)
 
             # Rename package directory
-            new_pkg_dir = target / "{{ project_name|replace('-', '_') }}"
-            pkg_dir.rename(new_pkg_dir)
+            new_pkg_dir_name = "[project_name | replace(from='-', to='_')]"
+            pkg_dir.rename(target / new_pkg_dir_name)
             console.print("✔ Reflex package structure parameterized")
 
-    # Generate copier.yml
-    console.print("Generating copier.yml...")
-    (target / "copier.yml").write_text(copier_yml)
+    # Generate template.yml
+    console.print("Generating template.yml...")
+    (target / "template.yml").write_text(template_yml)
 
     console.print(f"[green]Template generation complete for {app_type.value}![/green]")
 
 
 if __name__ == "__main__":
-    generate()
+    app()

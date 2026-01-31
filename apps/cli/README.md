@@ -50,7 +50,7 @@ rf version
 
 ### `template generate`
 
-Generates a parameterized [Copier](https://copier.readthedocs.io/) template from an existing application.
+Generates a parameterized [Moon Codegen](https://moonrepo.dev/docs/guides/codegen) template from an existing application.
 
 ```bash
 rf template generate --app <app-type>
@@ -62,11 +62,11 @@ rf template generate --app <app-type>
     - `reflex-chat`
 
 **Process:**
-1. Copies the source application to `templates/<app-type>`
+1. Copies the source application to `.moon/templates/<app-type>`
 2. Removes development artifacts (`.venv`, `.env`, `__pycache__`, etc.)
-3. Applies Jinja2 parameterization to key files (`pyproject.toml`, `.env`, `README.md`, etc.)
-4. For Reflex apps, automatically renames the main package and updates internal imports
-5. Generates the `copier.yml` configuration
+3. Applies Tera parameterization to key files (`pyproject.toml`, `.env`, `README.md`, etc.)
+4. For Reflex apps, automatically renames the main package and updates internal imports using path interpolation `[var]`
+5. Generates the `template.yml` configuration
 
 ## Development
 
@@ -77,4 +77,3 @@ For development setup and contribution guidelines, see the main [CONTRIBUTING.md
 **Source code structure:**
 - `src/cli/` - Main CLI package
 - `src/cli/commands/` - Command definitions
-- `src/cli/configs/` - Copier configurations
