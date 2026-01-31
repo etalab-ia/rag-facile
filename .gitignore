@@ -213,3 +213,7 @@ marimo/_lsp/
 
 # Letta local files
 .letta
+
+# Moon local files
+.moon/cache
+.moon/templates

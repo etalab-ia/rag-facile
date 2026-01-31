@@ -56,7 +56,7 @@ rag-facile/
 │   └── cli/          # Command-line interface
 ├── packages/         # Shared packages
 │   └── sample/       # Sample package
-├── templates/        # Generated project templates
+├── .moon/templates/  # Generated project templates
 ├── scripts/          # Utility scripts
 ├── pyproject.toml    # Root workspace configuration
 └── justfile         # Command recipes
@@ -98,9 +98,7 @@ just type-check
 just format
 ```
 
-### Template Management
-
-Parameterized project templates (using [Copier](https://copier.readthedocs.io/)) are generated from the living "Golden Master" apps in the `apps/` directory.
+Parameterized project templates (using [Moon Codegen](https://moonrepo.dev/docs/guides/codegen)) are generated from the living "Golden Master" apps in the `apps/` directory.
 
 To update all templates after making changes to the source apps:
 
