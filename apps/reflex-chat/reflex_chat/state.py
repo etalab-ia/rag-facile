@@ -41,6 +41,9 @@ class State(rx.State):
     # The current context from the uploaded PDF.
     context: str = ""
 
+    # list of attached file names
+    attached_files: list[str] = []
+
     # whether filtering is happening
     is_uploading: bool = False
 
@@ -51,7 +54,23 @@ class State(rx.State):
             upload_data = await file.read()
             text = extract_text_from_bytes(upload_data)
             self.context += format_as_context(text, file.filename or "")
+            self.attached_files.append(file.filename or "unknown")
         self.is_uploading = False
+
+    @rx.event
+    def clear_attachment(self, filename: str):
+        """Clear an attached file."""
+        # For simple demonstration, clearing one clears the context if it matches,
+        # but since context is a string, we might just clear everything for now
+        # or implement more complex logic.
+        # To keep it consistent with the screenshot pattern (remove file),
+        # we'll reset context if we remove all files.
+        if filename in self.attached_files:
+            self.attached_files.remove(filename)
+
+        # If no files left, clear context
+        if not self.attached_files:
+            self.context = ""
 
     @rx.event
     def create_chat(self, form_data: dict[str, Any]):
@@ -204,3 +223,6 @@ class State(rx.State):
 
         # Toggle the processing flag.
         self.processing = False
+
+        # Note: We currently keep context persistent for "Chat with PDF" behavior.
+        # If per-message attachment is desired, we should clear it here.

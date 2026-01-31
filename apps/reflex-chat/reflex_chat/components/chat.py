@@ -58,44 +58,99 @@ def chat() -> rx.Component:
     )
 
 
+def render_attached_file(filename: str) -> rx.Component:
+    """Render a single attached file."""
+    return rx.hstack(
+        rx.icon("file-text", size=14, color=rx.color("ruby", 11)),
+        rx.text(
+            filename, font_size="0.75em", color=rx.color("mauve", 12), weight="medium"
+        ),
+        rx.icon(
+            "x",
+            size=14,
+            on_click=State.clear_attachment(filename),
+            cursor="pointer",
+            color=rx.color("mauve", 11),
+            _hover={"color": rx.color("mauve", 12)},
+        ),
+        align_items="center",
+        padding="6px 10px",
+        border="1px solid var(--gray-a4)",
+        border_radius="8px",
+        background_color=rx.color("mauve", 3),
+        spacing="2",
+    )
+
+
 def action_bar() -> rx.Component:
     """The action bar to send a new message."""
     return rx.center(
         rx.vstack(
             rx.form(
-                rx.hstack(
-                    rx.upload(
-                        rx.icon("paperclip", size=18),
-                        id="upload_pdf",
-                        accept={"application/pdf": [".pdf"]},
-                        multiple=False,
-                        on_drop=State.handle_upload,
-                        border="1px solid var(--gray-a6)",
-                        padding="4px",
-                        border_radius="4px",
-                        margin_right="8px",
-                    ),
-                    rx.input(
-                        rx.input.slot(
-                            rx.tooltip(
-                                rx.icon("info", size=18),
-                                content="Enter a question to get a response.",
-                            )
+                rx.vstack(
+                    rx.cond(
+                        State.attached_files,
+                        rx.flex(
+                            rx.foreach(State.attached_files, render_attached_file),
+                            wrap="wrap",
+                            gap="2",
+                            padding="8px 12px 0 12px",
+                            width="100%",
                         ),
-                        placeholder="Type something...",
-                        id="question",
-                        flex="1",
                     ),
-                    rx.button(
-                        "Send",
-                        loading=State.processing,
-                        disabled=State.processing,
-                        type="submit",
+                    rx.hstack(
+                        rx.upload(
+                            rx.icon("paperclip", size=18, color=rx.color("mauve", 11)),
+                            id="upload_pdf",
+                            accept={"application/pdf": [".pdf"]},
+                            multiple=False,
+                            on_drop=State.handle_upload,
+                            padding="4px",
+                            cursor="pointer",
+                            _hover={
+                                "background_color": rx.color("mauve", 3),
+                                "border_radius": "4px",
+                            },
+                        ),
+                        rx.input(
+                            placeholder="Type a message...",
+                            id="question",
+                            width="100%",
+                            variant="soft",
+                            background_color="transparent",
+                            outline="none",
+                            border="none",
+                            _focus={
+                                "box_shadow": "none",
+                                "background_color": "transparent",
+                            },
+                        ),
+                        rx.button(
+                            rx.icon("send-horizontal", size=18),
+                            size="2",
+                            variant="ghost",
+                            color_scheme="gray",
+                            loading=State.processing,
+                            disabled=State.processing,
+                            type="submit",
+                            cursor="pointer",
+                        ),
+                        align_items="center",
+                        width="100%",
+                        padding="8px 12px",
+                        spacing="2",
                     ),
-                    max_width="50em",
-                    margin="0 auto",
-                    align_items="center",
+                    background_color=rx.color("mauve", 1),
+                    border="1px solid var(--gray-a6)",
+                    border_radius="12px",
+                    width="100%",
+                    spacing="0",
+                    align_items="stretch",
+                    box_shadow="0 2px 10px var(--black-a1)",
                 ),
+                width="100%",
+                max_width="50em",
+                margin_inline="auto",
                 reset_on_submit=True,
                 on_submit=State.process_question,
             ),
