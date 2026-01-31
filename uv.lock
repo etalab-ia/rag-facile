@@ -2375,6 +2375,7 @@ version = "0.1.0"
 source = { editable = "apps/reflex-chat" }
 dependencies = [
     { name = "openai" },
+    { name = "pdf-context" },
     { name = "python-dotenv" },
     { name = "reflex" },
 ]
@@ -2382,6 +2383,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "openai", specifier = ">=1.78.1" },
+    { name = "pdf-context", editable = "packages/pdf-context" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "reflex", specifier = ">=0.7.11" },
 ]

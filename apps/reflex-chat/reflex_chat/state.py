@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 import reflex as rx
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
+from pdf_context import extract_text_from_bytes, format_as_context
 
 # Checking if the API keys are set properly
 if not os.getenv("OPENAI_API_KEY"):
@@ -36,6 +37,21 @@ class State(rx.State):
 
     # Whether the new chat modal is open.
     is_modal_open: bool = False
+
+    # The current context from the uploaded PDF.
+    context: str = ""
+
+    # whether filtering is happening
+    is_uploading: bool = False
+
+    async def handle_upload(self, files: list[rx.UploadFile]):
+        """Handle the file upload."""
+        self.is_uploading = True
+        for file in files:
+            upload_data = await file.read()
+            text = extract_text_from_bytes(upload_data)
+            self.context += format_as_context(text, file.filename or "")
+        self.is_uploading = False
 
     @rx.event
     def create_chat(self, form_data: dict[str, Any]):
@@ -143,6 +159,18 @@ class State(rx.State):
                 ),
             }
         ]
+
+        if self.context:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "Use the following context to answer the user's questions:\n\n"
+                        f"{self.context}"
+                    ),
+                }
+            )
+
         for qa in self._chats[self.current_chat]:
             messages.append({"role": "user", "content": qa["question"]})
             messages.append({"role": "assistant", "content": qa["answer"]})

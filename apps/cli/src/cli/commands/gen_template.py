@@ -133,8 +133,8 @@ def generate(
     # Copy source to target
     shutil.copytree(source, target)
 
-    # Bundle pdf-context package for chainlit-chat
-    if app_type == AppType.chainlit:
+    # Bundle pdf-context package for chainlit-chat and reflex-chat
+    if app_type in [AppType.chainlit, AppType.reflex]:
         pdf_pkg_src = repo_root / "packages" / "pdf-context"
         if pdf_pkg_src.exists():
             pkg_target = target / "packages" / "pdf-context"

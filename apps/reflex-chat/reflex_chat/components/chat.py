@@ -64,6 +64,17 @@ def action_bar() -> rx.Component:
         rx.vstack(
             rx.form(
                 rx.hstack(
+                    rx.upload(
+                        rx.icon("paperclip", size=18),
+                        id="upload_pdf",
+                        accept={"application/pdf": [".pdf"]},
+                        multiple=False,
+                        on_drop=State.handle_upload,
+                        border="1px solid var(--gray-a6)",
+                        padding="4px",
+                        border_radius="4px",
+                        margin_right="8px",
+                    ),
                     rx.input(
                         rx.input.slot(
                             rx.tooltip(
