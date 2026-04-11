@@ -9,5 +9,15 @@ dist
 .netlify
 .vercel
 
-# Letta Code personal settings
-.letta/settings.local.json
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Letta
+.letta/
