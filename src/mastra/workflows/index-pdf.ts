@@ -7,6 +7,47 @@ import { vectorStore, PDF_INDEX_NAME } from '../lib/vector-store';
 
 const EMBEDDING_DIMENSION = 1536; // OpenAI text-embedding-3-small
 
+/**
+ * SSRF protection: Validate URL before fetching
+ * Blocks internal/private network addresses to prevent server-side request forgery
+ */
+const ALLOWED_PROTOCOLS = ['http:', 'https:'];
+const BLOCKED_HOSTS = [
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '::1',
+  '169.254.169.254', // AWS/GCP metadata
+  'metadata.google.internal',
+  'metadata.azure.net',
+];
+
+function validateUrl(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`Invalid URL: ${url}`);
+  }
+
+  if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+    throw new Error(`Protocol not allowed: ${parsed.protocol}. Only http and https are supported.`);
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // Block known internal hosts
+  if (BLOCKED_HOSTS.includes(hostname)) {
+    throw new Error(`Access to internal host is blocked: ${hostname}`);
+  }
+
+  // Block private IP ranges (10.x, 172.16-31.x, 192.168.x)
+  const privateIpPattern = /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+)$/;
+  if (privateIpPattern.test(hostname)) {
+    throw new Error(`Access to private IP range is blocked: ${hostname}`);
+  }
+}
+
 async function initializeVectorIndex(): Promise<void> {
   const indexes = await vectorStore.listIndexes();
   if (!indexes.includes(PDF_INDEX_NAME)) {
@@ -45,6 +86,9 @@ const downloadAndExtractText = createStep({
     }
 
     const { url } = inputData;
+
+    // SSRF protection: validate URL before fetching
+    validateUrl(url);
 
     // Fetch PDF
     const response = await fetch(url);
