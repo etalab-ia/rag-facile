@@ -1,12 +1,12 @@
-import { Agent } from '@mastra/core/agent';
-import { Memory } from '@mastra/memory';
-import { pdfQueryTool } from '../tools/pdf-query-tool';
-import { listDocumentsTool } from '../tools/list-documents-tool';
-import { indexPdfWorkflow } from '../workflows/index-pdf';
+import { Agent } from "@mastra/core/agent";
+import { Memory } from "@mastra/memory";
+import { listDocumentsTool } from "../tools/list-documents-tool";
+import { pdfQueryTool } from "../tools/pdf-query-tool";
+import { indexPdfWorkflow } from "../workflows/index-pdf";
 
 export const pdfChatAgent = new Agent({
-  id: 'pdf-chat-agent',
-  name: 'Chat with PDF',
+  id: "pdf-chat-agent",
+  name: "Chat with PDF",
   instructions: `You are an AI assistant that helps users understand and interact with PDF documents. You can answer questions about document content, summarize sections, and generate quizzes to test comprehension.
 
 ## Your Capabilities
@@ -156,7 +156,7 @@ When asking about code examples:
 - Be encouraging and supportive when running quizzes - learning is the goal!
 `,
   model: {
-    id: 'albert-api/openai/gpt-oss-120b',
+    id: "albert-api/openai/gpt-oss-120b",
     url: process.env.OPENAI_BASE_URL,
     apiKey: process.env.OPENAI_API_KEY,
   },
