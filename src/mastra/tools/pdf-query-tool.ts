@@ -92,7 +92,7 @@ For general topic searches without page constraints, omit pageStart/pageEnd.`,
 
     for (const page of selectedPages) {
       try {
-        const filter = { pageNumber: page } as { pageNumber: number; documentId?: string };
+        const filter: { pageNumber: number; documentId?: string } = { pageNumber: page };
         if (documentId) {
           filter.documentId = documentId;
         }

@@ -154,7 +154,7 @@ const splitIntoChunks = createStep({
     chunks: z.array(
       z.object({
         text: z.string(),
-        metadata: z.record(z.string(), z.any()),
+        metadata: z.record(z.string(), z.unknown()),
       })
     ),
   }),
@@ -214,7 +214,7 @@ const generateAndStoreEmbeddings = createStep({
     chunks: z.array(
       z.object({
         text: z.string(),
-        metadata: z.record(z.string(), z.any()),
+        metadata: z.record(z.string(), z.unknown()),
       })
     ),
   }),

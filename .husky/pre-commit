@@ -1,8 +1,5 @@
-# Biome: format, lint, and organize imports
-pnpm biome check --write --no-errors-on-unmatched
-
-# TypeScript: type check
-pnpm tsc --noEmit
+# lint-staged: runs formatters + typecheck on staged files only
+pnpm lint-staged
 
 # GitLeaks: secret detection (staged files only)
 gitleaks git --staged

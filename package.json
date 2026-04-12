@@ -39,7 +39,11 @@
     "@types/node": "^25.2.3",
     "@types/pdf-parse": "^1.1.5",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "mastra": "latest",
     "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "*.{ts,js}": ["biome check --write", "tsc --noEmit --skipLibCheck"]
   }
 }

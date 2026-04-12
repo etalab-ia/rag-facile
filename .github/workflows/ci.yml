@@ -14,16 +14,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup proto toolchain
+        uses: moonrepo/setup-toolchain@v0
         with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
+          auto-install: true
 
       - name: Install dependencies
         run: pnpm install
