@@ -1,10 +1,10 @@
-import { createTool } from '@mastra/core/tools';
-import { z } from 'zod';
-import { ModelRouterEmbeddingModel } from '@mastra/core/llm';
-import { vectorStore, PDF_INDEX_NAME } from '../lib/vector-store';
+import { ModelRouterEmbeddingModel } from "@mastra/core/llm";
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+import { PDF_INDEX_NAME, vectorStore } from "../lib/vector-store";
 
 export const listDocumentsTool = createTool({
-  id: 'list-documents',
+  id: "list-documents",
   description: `List all indexed PDF documents available for quizzing.
 Use this tool when:
 - The user asks what documents/books are available
@@ -23,8 +23,8 @@ Use this tool when:
       // A cleaner approach would be a separate document registry, but this keeps the
       // template simple with fewer moving parts. For production, consider tracking
       // indexed documents in your own database.
-      const embeddingModel = new ModelRouterEmbeddingModel('openai/text-embedding-3-small');
-      const { embeddings } = await embeddingModel.doEmbed({ values: ['document'] });
+      const embeddingModel = new ModelRouterEmbeddingModel("openai/text-embedding-3-small");
+      const { embeddings } = await embeddingModel.doEmbed({ values: ["document"] });
 
       const results = await vectorStore.query({
         indexName: PDF_INDEX_NAME,
@@ -47,7 +47,7 @@ Use this tool when:
         if (docId && !documentsMap.has(docId)) {
           documentsMap.set(docId, {
             documentId: docId,
-            title: (result.metadata?.documentTitle as string) || 'Untitled',
+            title: (result.metadata?.documentTitle as string) || "Untitled",
             totalPages: (result.metadata?.totalPages as number) || 0,
           });
         }
@@ -58,7 +58,7 @@ Use this tool when:
       if (documents.length === 0) {
         return {
           documents: [],
-          message: 'No documents have been indexed yet. Use the index-pdf workflow to add a PDF.',
+          message: "No documents have been indexed yet. Use the index-pdf workflow to add a PDF.",
         };
       }
 
@@ -69,7 +69,7 @@ Use this tool when:
     } catch {
       return {
         documents: [],
-        message: 'Could not retrieve documents. The vector index may not exist yet.',
+        message: "Could not retrieve documents. The vector index may not exist yet.",
       };
     }
   },

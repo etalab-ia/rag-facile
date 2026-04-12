@@ -1,0 +1,5 @@
+# lint-staged: runs formatters + typecheck on staged files only
+pnpm lint-staged
+
+# GitLeaks: secret detection (staged files only)
+gitleaks git --staged
