@@ -1,46 +1,162 @@
-![Chat with PDF](assets/header.png)
+# Rag Facile
 
-# Chat with PDF
+[![Release](https://img.shields.io/github/v/release/etalab-ia/rag-facile?sort=date&style=flat-square)](https://github.com/etalab-ia/rag-facile/releases)
+[![License](https://img.shields.io/github/license/etalab-ia/rag-facile?style=flat-square)](LICENSE)
+[![Status](https://img.shields.io/badge/status-alpha-orange?style=flat-square)](https://github.com/etalab-ia/rag-facile)
 
-An AI-powered PDF assistant that lets you chat with any PDF document. Ask questions about the content, get answers with page citations, and optionally generate quizzes to test your comprehension. Uses RAG (Retrieval-Augmented Generation) to find relevant passages and provide accurate, sourced answers. Built with [Mastra](https://mastra.ai).
+```
+######     #     #####     #######    #     #####  ### #       #######
+#     #   # #   #     #    #         # #   #     #  #  #       #
+#     #  #   #  #          #        #   #  #        #  #       #
+######  #     # #  ####    #####   #     # #        #  #       #####
+#   #   ####### #     #    #       ####### #        #  #       #
+#    #  #     # #     #    #       #     # #     #  #  #       #
+#     # #     #  #####     #       #     #  #####  ### ####### #######
+```
 
-## Why we built this
+Discutez avec vos documents PDF en utilisant le RAG (Retrieval-Augmented Generation).
 
-Putting an entire PDF in a context window hits token limits, wastes money on irrelevant tokens, and causes context drift—where the model loses focus as it wades through pages of text that don't matter. RAG solves this: the PDF gets chunked into vector embeddings, and when you ask a question, only the most relevant chunks are included in the prompt. This keeps your costs down, avoids context limits, and gives the model focused context for better answers.
+## Pourquoi RAG ?
 
-This template shows how Mastra's RAG capabilities, vector storage, and agent workflows fit together—and gives you a starting point to build your own document chat experience.
+Vous avez peut-être tenté de copier-coller un long document dans un chat avec une IA. Résultat : l'IA "oublie" des parties du texte, donne des réponses vagues, ou pire — invente des informations.
 
-## Demo
+**Le problème** : Les modèles de langage ont une limite de contexte. Au-delà de quelques milliers de mots, ils perdent le fil. Et pour les documents de 100+ pages, c'est impossible.
 
-<video controls width="640" height="360" src="https://res.cloudinary.com/mastra-assets/video/upload/v1772538110/template-chat-with-pdf_uamb2s.mp4"></video>
+**La solution RAG** (Retrieval-Augmented Generation) fonctionne différemment :
+1. Le document est découpé en petits morceaux
+2. Chaque morceau est transformé en embedding (une représentation numérique)
+3. Quand vous posez une question, seuls les morceaux pertinents sont récupérés
+4. L'IA génère sa réponse à partir de ces extraits uniquement
 
-This demo runs in Mastra Studio, but you can connect this agent to your React, Next.js, or Vue app using the [Mastra Client SDK](https://mastra.ai/docs/server/mastra-client) or agentic UI libraries like [AI SDK UI](https://mastra.ai/guides/build-your-ui/ai-sdk-ui), [CopilotKit](https://mastra.ai/guides/build-your-ui/copilotkit), or [Assistant UI](https://mastra.ai/guides/build-your-ui/assistant-ui).
+**Les bénéfices** :
+- 🎯 Réponses précises basées sur le contenu réel
+- 📄 Citations des pages sources pour vérification
+- 💰 Coût réduit (moins de tokens consommés)
+- 📚 Documents de n'importe quelle taille
 
-## Features
+## Fonctionnalités
 
-- **No token limits**: chat with 500-page textbooks as easily as a 5-page memo
-- **Page citations**: every answer references its source pages so you can verify
-- **Quiz generation**: active recall quizzes generated from your actual content
+- ✅ **Conversation avec vos PDF** — Posez vos questions, obtenez des réponses avec citations de pages
+- ✅ **Indexation automatique** — Fournissez une URL, le document est indexé et prêt à l'emploi
+- ✅ **Génération de quiz** — Testez votre compréhension du document
+- ✅ **Pas de limite de taille** — Documents de 500 pages aussi fluides que 5 pages
 
-## Quick start
+## Démarrage rapide
 
-1. **Clone the template**
-   - Run `npx create-mastra@latest --template chat-with-pdf` to scaffold the project locally.
-2. **Add your API key**
-   - Copy `.env.example` to `.env` and fill in your OpenAI API key.
-3. **Start the dev server**
-   - Run `npm run dev` and open [localhost:4111](http://localhost:4111) to try it out.
+Objectif : être opérationnel en moins d'une heure.
 
-Open Studio and start chatting with the PDF agent. Provide a PDF URL to index it, then ask questions about the content or request a quiz on specific pages or topics. The agent searches the indexed content, answers questions with page citations, and can generate comprehension quizzes from actual passages.
+### Prérequis
 
-> Need a PDF to try? Grab our free book, [Principles of Building AI Agents](https://mastra.ai/books/principles-of-building-ai-agents).
+- **Node.js** >= 22.0.0
+- **pnpm** — [Installation](https://pnpm.io/installation)
+- **Clé API Albert** — Demandez l'accès ici : https://albert.sites.beta.gouv.fr/access/
 
-## Making it yours
+### Installation
 
-Swap in a different embedding model, adjust the chunking strategy, or wire the agent into your app using the [Mastra Client SDK](https://mastra.ai/docs/server/mastra-client). You can also swap out LibSQL for another vector database — Mastra supports [many options](https://mastra.ai/docs/storage/vector-databases) including Pinecone, Qdrant, Chroma, pgvector, and more. The agent, tools, and workflow are all in `src/` — edit them directly to fit your use case.
+```bash
+# Cloner le repository
+git clone https://github.com/etalab-ia/rag-facile.git
+cd rag-facile
 
-## About Mastra templates
+# Installer les dépendances
+pnpm install
 
-[Mastra templates](https://mastra.ai/templates) are ready-to-use projects that show off what you can build — clone one, poke around, and make it yours. They live in the [Mastra monorepo](https://github.com/mastra-ai/mastra) and are automatically synced to standalone repositories for easier cloning.
+# Configurer l'environnement
+cp .env.example .env
+```
 
-Want to contribute? See [CONTRIBUTING.md](https://github.com/mastra-ai/mastra/blob/main/templates/template-chat-with-pdf/CONTRIBUTING.md).
+Éditez le fichier `.env` avec vos identifiants Albert :
+
+```env
+OPENAI_API_KEY=votre-cle-api-albert
+OPENAI_BASE_URL=https://albert.api.etalab.gouv.fr/v1
+```
+
+### Lancer le serveur
+
+```bash
+pnpm dev
+```
+
+Ouvrez [localhost:4111](http://localhost:4111) pour accéder à l'interface Mastra Studio.
+
+### Premier test
+
+1. Dans l'interface, ouvrez l'agent **"Chat with PDF"**
+2. Collez l'URL d'un PDF public
+3. Attendez l'indexation (quelques secondes)
+4. Posez une question sur le contenu
+
+## Architecture
+
+```
+┌─────────┐     ┌────────────┐     ┌──────────────┐
+│ PDF URL │────▶│ Indexation │────▶│ Vector Store │
+└─────────┘     └────────────┘     └──────────────┘
+                                            │
+┌──────────┐     ┌────────────┐             │
+│ Question │────▶│ Recherche  │◀────────────┘
+└──────────┘     └────────────┘
+                       │
+                       ▼
+               ┌──────────────┐
+               │  Albert API  │
+               └──────────────┘
+                       │
+                       ▼
+               ┌──────────────┐
+               │ Réponse +    │
+               │ Citations    │
+               └──────────────┘
+```
+
+### Structure du projet
+
+```
+src/mastra/
+├── agents/          # Agent conversationnel
+├── tools/           # Outils (recherche, listage documents)
+├── workflows/       # Workflow d'indexation PDF
+├── lib/             # Configuration vector store
+└── index.ts         # Point d'entrée Mastra
+```
+
+## Personnalisation
+
+### Changer le modèle
+
+La configuration se trouve dans `src/mastra/agents/pdf-chat-agent.ts` :
+
+```typescript
+model: {
+  id: "albert-api/openai/gpt-oss-120b",  // Format Albert API OpenAI-compatible
+  url: process.env.OPENAI_BASE_URL,
+  apiKey: process.env.OPENAI_API_KEY,
+}
+```
+
+Consultez la [documentation Albert](https://albert.sites.beta.gouv.fr/docs) pour les modèles disponibles.
+
+### Changer la base vectorielle
+
+Par défaut, Rag Facile utilise LibSQL (stockage fichier local). Mastra supporte d'autres options :
+
+- Pinecone
+- Qdrant
+- Chroma
+- pgvector
+- Cloudflare D1
+
+Voir la [documentation Mastra](https://mastra.ai/docs/storage/vector-databases) pour la configuration.
+
+### Intégrer dans votre application
+
+Rag Facile expose une API via Mastra. Utilisez le [Mastra Client SDK](https://mastra.ai/docs/server/mastra-client) pour connecter votre frontend (React, Next.js, Vue).
+
+## Contribution
+
+Les contributions sont bienvenues ! Ouvrez une issue ou soumettez une pull request.
+
+## Licence
+
+Apache-2.0 — © 2025 Etalab
