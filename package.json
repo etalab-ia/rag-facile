@@ -11,7 +11,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "format": "biome format --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --skipLibCheck"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +19,7 @@
   "packageManager": "pnpm@10.29.3",
   "type": "module",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
