@@ -47,7 +47,7 @@ Objectif : être opérationnel en moins d'une heure.
 
 ### Prérequis
 
-- **Node.js** >= 22.13.0
+- **Node.js** >= 22.0.0
 - **pnpm** — [Installation](https://pnpm.io/installation)
 - **Clé API Albert** — Demandez l'accès ici : https://albert.sites.beta.gouv.fr/access/
 
@@ -93,18 +93,21 @@ Ouvrez [localhost:4111](http://localhost:4111) pour accéder à l'interface Mast
 ┌─────────┐     ┌────────────┐     ┌──────────────┐
 │ PDF URL │────▶│ Indexation │────▶│ Vector Store │
 └─────────┘     └────────────┘     └──────────────┘
-                                           │
-                                           ▼
-┌──────────┐     ┌────────────┐     ┌─────────────┐
-│ Question │────▶│ Recherche  │────▶│   Albert    │
-└──────────┘     └────────────┘     │    API      │
-                                    └─────────────┘
-                                           │
-                                           ▼
-                                    ┌─────────────┐
-                                    │ Réponse +   │
-                                    │ Citations   │
-                                    └─────────────┘
+                                            │
+┌──────────┐     ┌────────────┐             │
+│ Question │────▶│ Recherche  │◀────────────┘
+└──────────┘     └────────────┘
+                       │
+                       ▼
+               ┌──────────────┐
+               │  Albert API  │
+               └──────────────┘
+                       │
+                       ▼
+               ┌──────────────┐
+               │ Réponse +    │
+               │ Citations    │
+               └──────────────┘
 ```
 
 ### Structure du projet
@@ -126,7 +129,7 @@ La configuration se trouve dans `src/mastra/agents/pdf-chat-agent.ts` :
 
 ```typescript
 model: {
-  id: "albert-api/openai/gpt-oss-120b",
+  id: "albert-api/openai/gpt-oss-120b",  // Format Albert API OpenAI-compatible
   url: process.env.OPENAI_BASE_URL,
   apiKey: process.env.OPENAI_API_KEY,
 }
