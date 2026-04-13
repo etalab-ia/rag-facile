@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
+    "@llamaindex/liteparse": "^1.4.6",
     "@mastra/core": "latest",
     "@mastra/evals": "latest",
     "@mastra/libsql": "latest",
