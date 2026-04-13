@@ -68,7 +68,7 @@ cp .env.example .env
 Éditez le fichier `.env` avec vos identifiants Albert :
 
 ```env
-OPENAI_API_KEY=votre-cle-api-albert
+OPENAI_API_KEY=votre-cle-albert-api
 OPENAI_BASE_URL=https://albert.api.etalab.gouv.fr/v1
 ```
 
