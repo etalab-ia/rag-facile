@@ -4,17 +4,7 @@ Welcome! This guide helps you contribute to Rag Facile, the French government RA
 
 ## Getting Started
 
-```bash
-# Clone the repository
-git clone https://github.com/etalab-ia/rag-facile.git
-cd rag-facile
-
-# Install dependencies
-pnpm install
-
-# Start the dev server
-pnpm dev
-```
+Please refer to the [Installation section of the README](./README.md#installation) to set up your development environment.
 
 ## Creating a Branch
 
@@ -44,16 +34,7 @@ git checkout -b feature/your-feature
 
 ## Testing
 
-```bash
-# Run type checking
-pnpm typecheck
-
-# Run linting
-pnpm lint
-
-# Fix lint issues
-pnpm lint:fix
-```
+Please refer to the [Development Commands](#development-commands) section for the available testing and linting commands.
 
 ## Questions?
 
