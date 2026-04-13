@@ -1,5 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
+import { PdfToTextProcessor } from "../processors/pdf-to-text-processor";
 import { listDocumentsTool } from "../tools/list-documents-tool";
 import { pdfQueryTool } from "../tools/pdf-query-tool";
 import { indexPdfWorkflow } from "../workflows/index-pdf";
@@ -162,5 +163,6 @@ When asking about code examples:
   },
   tools: { pdfQueryTool, listDocumentsTool },
   workflows: { indexPdfWorkflow },
+  inputProcessors: [new PdfToTextProcessor()],
   memory: new Memory(),
 });
