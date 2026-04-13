@@ -74,11 +74,16 @@ export class PdfToTextProcessor implements Processor {
       if (part.data instanceof URL) {
         // Fetch the PDF from URL
         const response = await fetch(part.data.toString());
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch PDF from URL: ${response.status} ${response.statusText}`
+          );
+        }
         const arrayBuffer = await response.arrayBuffer();
         buffer = new Uint8Array(arrayBuffer);
       } else if (typeof part.data === "string") {
-        // Base64-encoded string
-        buffer = Uint8Array.from(atob(part.data), (c) => c.charCodeAt(0));
+        // Base64-encoded string — use Buffer for efficiency in Node.js
+        buffer = Buffer.from(part.data, "base64");
       } else {
         // Already Uint8Array
         buffer = part.data;
