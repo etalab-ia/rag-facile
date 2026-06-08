@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0](https://github.com/etalab-ia/rag-facile/compare/v0.1.0...v0.2.0) (2026-06-08)
+
+
+### Features
+
+* add Mastra framework skill ([bfbed7d](https://github.com/etalab-ia/rag-facile/commit/bfbed7d88aca12f6c9383a0437f55b1cc0dde7fb))
+* add Mastra framework skill ([f36a4f3](https://github.com/etalab-ia/rag-facile/commit/f36a4f3351143cf69045a023da620d1658703922))
+* add PdfToTextProcessor for PDF uploads in Mastra Studio ([5b902ed](https://github.com/etalab-ia/rag-facile/commit/5b902ed5e62bdb7e314b77dd6423a03a6b7b0f0c))
+* add PdfToTextProcessor to handle PDF uploads in Mastra Studio ([25f23e7](https://github.com/etalab-ia/rag-facile/commit/25f23e74b9bbae63d2ad3d3d23c406f5d92fcf4f))
+
+
+### Bug Fixes
+
+* address PR review comments on PdfToTextProcessor ([b28e4b0](https://github.com/etalab-ia/rag-facile/commit/b28e4b01525311399389657b7f3ba9ef198e61f6))
+
 ## 0.1.0 (2026-04-13)
 
 
